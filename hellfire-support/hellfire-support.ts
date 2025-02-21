@@ -111,7 +111,7 @@ export class HellfireSupport extends BaseSupport {
     private async runFreezeMode() {
         for (let freezeCount = 0; freezeCount < 5; freezeCount++) {
             const currentTime = new Date().getTime();
-            if (currentTime - this.freezeModeStartTimestamp > 5000) {
+            if (this.mode === SupportMode.Freeze && currentTime - this.freezeModeStartTimestamp > 5000) {
                 await this.switchMode(SupportMode.HellFire);
                 return;
             }
