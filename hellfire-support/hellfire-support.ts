@@ -52,6 +52,7 @@ export class HellfireSupport extends BaseSupport {
     }
 
     protected async initialized(): Promise<void> {
+        await this.switchMode(SupportMode.HellFire);
         this.localStorage.variable<boolean>('is-invincible', (await this.scriptNumberVariable('is-invincible')) === 1);
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
