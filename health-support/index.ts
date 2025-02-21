@@ -4,6 +4,8 @@ import { HealthSupport } from './health-support';
 
 async function main() {
     console.log('start');
+    container.register<string>('ScriptName', { useValue: 'health-support' });
+
     const support = container.resolve<HealthSupport>(HealthSupport);
     await support.init();
 

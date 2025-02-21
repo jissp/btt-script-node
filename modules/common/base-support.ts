@@ -1,33 +1,42 @@
 import { container } from 'tsyringe';
-import { WindowRect } from './common.interface';
+import { SearchImageBase64Type, WindowRect } from './common.interface';
 import { LocalStorage } from '../local-storage';
-import { BaramUtil } from '../baram_util';
-import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
+import { BttClient, BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { TerminateException } from './terminate.exception';
-import { SearchImageBase64Type } from '../baram_util/interface';
+import { BttStorage } from '../storage';
+import { Timer, TimerFactory } from '../timer';
 
 export abstract class BaseSupport {
     protected readonly bttService: BttService;
-    protected readonly baramUtil: BaramUtil;
     protected readonly localStorage: LocalStorage;
+    protected readonly bttStorage: BttStorage;
+    protected readonly timerFactory: TimerFactory;
 
     protected abstract readonly scriptName: string;
     private readonly scriptStartedTimestamp: number;
     private _activeWindowRect?: WindowRect;
 
+    protected defensiveTimer: Timer;
+
     protected constructor() {
-        this.bttService = container.resolve(BttService);
-        this.baramUtil = container.resolve(BaramUtil);
+        container.registerInstance(BttClient, new BttClient('jissp'));
         this.localStorage = container.resolve(LocalStorage);
+        this.bttStorage = container.resolve(BttStorage);
+        this.bttService = container.resolve(BttService);
+        this.timerFactory = container.resolve(TimerFactory);
 
         this.scriptStartedTimestamp = new Date().getTime();
+
+        this.defensiveTimer = this.timerFactory.create('defensive', 185000);
     }
 
     public async init() {
-        await this.bttService.stringVariable('current-auto-script-name', this.scriptName);
+        await this.bttStorage.stringVariable('current-auto-script-name', this.scriptName);
         // 숫자가 높으면 과학적 표기법으로 변경되버려서 스트링으로 저장함.
-        await this.scriptVariable('started-timestamp', this.scriptStartedTimestamp.toString());
+        await this.bttStorage.scriptVariable('started-timestamp', this.scriptStartedTimestamp.toString());
         this._activeWindowRect = await this.bttService.getActiveWindowRect();
+
+        await this.defensiveTimer.init();
 
         await this.initialized();
     }
@@ -43,9 +52,9 @@ export abstract class BaseSupport {
                     throw error;
                 }
 
-                await this.scriptVariable('last-error', error as string);
+                await this.bttStorage.scriptVariable('last-error', error as string);
             }
-        } while (await this.isActiveApp());
+        } while (await this.isRunning());
     }
 
     protected abstract handle(): Promise<void>;
@@ -63,18 +72,18 @@ export abstract class BaseSupport {
     }
 
     public async isActiveApp() {
-        const appName = await this.bttService.stringVariable('active_app_name');
+        const appName = await this.bttStorage.stringVariable('active_app_name');
 
         return appName === 'MapleStory Worlds';
     }
 
     public async isRunning() {
-        const currentAutoScriptName = await this.bttService.stringVariable('current-auto-script-name');
+        const currentAutoScriptName = await this.bttStorage.stringVariable('current-auto-script-name');
         if (currentAutoScriptName !== this.scriptName) {
             return false;
         }
 
-        const startedTimestamp = Number(await this.scriptVariable('started-timestamp'));
+        const startedTimestamp = Number(await this.bttStorage.scriptVariable('started-timestamp'));
 
         return startedTimestamp === this.scriptStartedTimestamp;
     }
@@ -83,14 +92,6 @@ export abstract class BaseSupport {
         if (!(await this.isRunning())) {
             throw new TerminateException('Main loop terminated');
         }
-    }
-
-    public async scriptVariable(name: string, value?: string) {
-        return this.bttService.stringVariable(`${this.scriptName}-${name}`, value);
-    }
-
-    public async scriptNumberVariable(name: string, value?: number) {
-        return this.bttService.numberVariable(`${this.scriptName}-${name}`, value);
     }
 
     // Game 관련
@@ -203,16 +204,14 @@ export abstract class BaseSupport {
 
         const varName = 'defensive';
         this.localStorage.variable<number>(varName, new Date().getTime());
-        await this.scriptVariable(varName, this.localStorage.variable(varName).toString());
+        await this.bttStorage.scriptVariable(varName, this.localStorage.variable(varName).toString());
     }
 
     async runDefensiveIfTabTab() {
         await this.bttService.sendKey(BttKeyCode.Number8, 80);
         await this.bttService.sendKey(BttKeyCode.Number9, 80);
 
-        const varName = 'defensive';
-        this.localStorage.variable<number>(varName, new Date().getTime());
-        await this.scriptVariable(varName, this.localStorage.variable(varName).toString());
+        await this.defensiveTimer.set();
     }
 
     async runCurse(isNext?: boolean) {
@@ -297,20 +296,27 @@ export abstract class BaseSupport {
         }
     }
 
-    async getItemBoxInfo() {
-        return this.bttService.captureWithExtractText(this.calcItemRect(), 80);
+    async getItemBoxInfo(isSplit: true): Promise<string[]>;
+    async getItemBoxInfo(isSplit: false): Promise<string>;
+    async getItemBoxInfo(isSplit: boolean) {
+        const itemText = await this.bttService.captureWithExtractText(this.calcItemRect(), 80);
+
+        if (isSplit) {
+            return itemText.split('\n');
+        }
+
+        return itemText;
     }
 
     extractItemShortCutAndName(itemRowText: string) {
         return itemRowText.match(/([A-z0951])[\s]?[:;][\s]?([\w\W]+)/) ?? [];
     }
 
-    async isManaRecoveryItemShortCutToA() {
-        const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
+    async isManaRecoveryItemShortCutToA(itemRows: string[]) {
         if (itemRows.length === 0) {
             return false;
         }
-        
+
         const firstItem = itemRows[0];
         const [, shortCut, itemName] = this.extractItemShortCutAndName(firstItem);
 

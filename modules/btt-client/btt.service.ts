@@ -1,39 +1,23 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { uSleep } from '../utils';
 import { WindowRect } from '../common/common.interface';
 import { BttClient } from './btt.client';
 import { BttKeyCode, ImageSearchOn, ImageSearchRegion } from './btt.interface';
+import { BttStorage } from '../storage';
 
 @injectable()
 export class BttService {
     private client: BttClient;
 
-    constructor() {
+    constructor(@inject(BttStorage) private readonly bttStorage: BttStorage) {
         this.client = new BttClient('jissp');
     }
 
-    public async numberVariable(name: string, value?: number) {
-        if (value === undefined) {
-            return this.client.getNumberVariable(name);
-        }
-
-        return this.client.setNumberVariable(name, value);
-    }
-
-
-    public async stringVariable(name: string, value?: string) {
-        if (value === undefined) {
-            return this.client.getStringVariable(name);
-        }
-
-        return this.client.setStringVariable(name, value);
-    }
-
     public async getActiveWindowRect(): Promise<WindowRect> {
-        const x = await this.numberVariable('focused_window_x');
-        const y = await this.numberVariable('focused_window_y');
-        const width = await this.numberVariable('focused_window_width');
-        const height = await this.numberVariable('focused_window_height');
+        const x = await this.bttStorage.numberVariable('focused_window_x');
+        const y = await this.bttStorage.numberVariable('focused_window_y');
+        const width = await this.bttStorage.numberVariable('focused_window_width');
+        const height = await this.bttStorage.numberVariable('focused_window_height');
 
         return {
             x,
@@ -101,7 +85,7 @@ export class BttService {
     }
 
     async isSearchedImage() {
-        return Boolean(await this.numberVariable('image_location_found'));
+        return Boolean(await this.bttStorage.numberVariable('image_location_found'));
     }
 
     public async getSearchedImagePositionX() {

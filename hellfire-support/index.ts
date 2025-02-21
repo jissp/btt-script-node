@@ -4,6 +4,7 @@ import { HellfireSupport } from './hellfire-support';
 
 async function main() {
     console.log('start');
+    container.register<string>('ScriptName', { useValue: 'hellfire-support' });
     const support = container.resolve<HellfireSupport>(HellfireSupport);
     await support.init();
 

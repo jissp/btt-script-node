@@ -1,7 +1,8 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { BaseSupport } from '../modules/common/base-support';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
+import { Timer } from '../modules/timer';
 
 enum SupportMode {
     None = 'none',
@@ -11,20 +12,24 @@ enum SupportMode {
 
 @injectable()
 export class HealthSupport extends BaseSupport {
-    protected readonly scriptName = 'health-support';
-
     private mode: SupportMode = SupportMode.Health;
     private curseModeStartTimestamp: number = 0;
 
-    constructor() {
+    private whiteTigerTimer: Timer;
+    private manaInjectionTimer: Timer;
+
+    constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
+
+        this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
+        this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
     }
 
     protected async handle(): Promise<void> {
         await this.terminateIfNotRunning();
 
         const oldMode = this.mode;
-        this.mode = (await this.scriptVariable('mode')) as SupportMode;
+        this.mode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
 
         const isChanged = oldMode !== this.mode;
 
@@ -35,9 +40,17 @@ export class HealthSupport extends BaseSupport {
 
     protected async initialized(): Promise<void> {
         await this.switchMode(SupportMode.Health);
-        this.localStorage.variable<boolean>('is-invincible', (await this.scriptNumberVariable('is-invincible')) === 1);
-        this.localStorage.variable<number>('defensive', Number(await this.scriptVariable('defensive')));
-        this.localStorage.variable<number>('white-tiger', Number(await this.scriptVariable('white-tiger')));
+        this.localStorage.variable<boolean>(
+            'is-invincible',
+            (await this.bttStorage.scriptNumberVariable('is-invincible')) === 1,
+        );
+
+        //
+        await this.whiteTigerTimer.init();
+        const currentCharacterMana = await this.bttStorage.scriptNumberVariable('current-mana');
+        if (currentCharacterMana) {
+            this.whiteTigerTimer.setExpiresIn((Math.round(currentCharacterMana / 1000) + 10) * 100);
+        }
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
         this.backgroundLoop();
@@ -51,7 +64,7 @@ export class HealthSupport extends BaseSupport {
             await this.trySelfBuff();
 
             await uSleep(1000);
-        } while(await this.isRunning());
+        } while (await this.isRunning());
     }
 
     private async handleMode(mode: SupportMode, isChanged: boolean) {
@@ -103,7 +116,7 @@ export class HealthSupport extends BaseSupport {
             }
         }
 
-        if (this.isAbleToDefensive()) {
+        if (this.defensiveTimer.isExpired()) {
             await uSleep(500);
             await this.runDefensiveIfTabTab();
         }
@@ -114,7 +127,7 @@ export class HealthSupport extends BaseSupport {
 
             if (isModeratelyEmptyMana && healLoop === 0) {
                 await this.bttService.sendKey(BttKeyCode.Number1, 100);
-            } else if (this.isAbleToWhiteTigerHeal()) {
+            } else if (this.whiteTigerTimer.isExpired()) {
                 await this.runWhiteTigerHealing();
             } else {
                 await this.bttService.sendKey(BttKeyCode.Number2, 180);
@@ -144,7 +157,7 @@ export class HealthSupport extends BaseSupport {
     }
 
     private async switchMode(mode: SupportMode) {
-        await this.scriptVariable('mode', mode);
+        await this.bttStorage.scriptVariable('mode', mode);
     }
 
     private async tryResurrection(waitTimestamp = 500) {
@@ -185,22 +198,9 @@ export class HealthSupport extends BaseSupport {
         }
     }
 
-    private isAbleToWhiteTigerHeal() {
-        const currentMana = this.localStorage.variable<number>('current-mana') ?? 0;
-        if (currentMana === 0) {
-            return false;
-        }
-
-        const coolTime = (Math.round(currentMana / 1000) + 10) * 100;
-
-        return this.isAbleToCoolTime('white-tiger', coolTime);
-    }
-
     private async runWhiteTigerHealing() {
         await this.bttService.sendKey(BttKeyCode.Number3);
 
-        const varName = 'white-tiger';
-        this.localStorage.variable(varName, new Date().getTime());
-        await this.scriptVariable(varName, this.localStorage.variable<number>(varName)?.toString());
+        await this.whiteTigerTimer.set();
     }
 }

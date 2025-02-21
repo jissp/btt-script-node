@@ -1,7 +1,8 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { BaseSupport } from '../modules/common/base-support';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
+import { Timer } from '../modules/timer';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -11,20 +12,22 @@ enum SupportMode {
 
 @injectable()
 export class HellfireSupport extends BaseSupport {
-    protected readonly scriptName = 'hellfire-support';
-
     private mode: SupportMode = SupportMode.HellFire;
     private freezeModeStartTimestamp: number = 0;
 
-    constructor() {
+    private hellFireTimer: Timer;
+
+    constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
+
+        this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
     }
 
     protected async handle(): Promise<void> {
         await this.terminateIfNotRunning();
 
         const oldMode = this.mode;
-        this.mode = (await this.scriptVariable('mode')) as SupportMode;
+        this.mode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
 
         const isChanged = oldMode !== this.mode;
         if (isChanged) {
@@ -53,8 +56,8 @@ export class HellfireSupport extends BaseSupport {
 
     protected async initialized(): Promise<void> {
         await this.switchMode(SupportMode.HellFire);
-        this.localStorage.variable<number>('defensive', Number(await this.scriptVariable('defensive')));
-        this.localStorage.variable<number>('hellfire', Number(await this.scriptVariable('hellfire')));
+
+        await this.hellFireTimer.init();
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
         // this.backgroundLoop();
@@ -89,7 +92,7 @@ export class HellfireSupport extends BaseSupport {
             }
         }
 
-        if (!this.isAbleToHellfire()) {
+        if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
 
             return false;
@@ -127,10 +130,10 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async switchMode(mode: SupportMode) {
-        await this.scriptVariable('mode', mode);
+        await this.bttStorage.scriptVariable('mode', mode);
     }
 
-    private async tryManaRecovery(limitCount = 5) {
+    private async tryManaRecovery(limitCount = 9) {
         let tryCount = 0;
         do {
             if (++tryCount > limitCount) {
@@ -138,8 +141,7 @@ export class HellfireSupport extends BaseSupport {
             }
 
             if (await this.isZeroMana()) {
-                const itemText = await this.getItemBoxInfo();
-                const itemRows = itemText.split('\n');
+                const itemRows = await this.getItemBoxInfo(true);
                 this.localStorage.variable<string[]>('item-rows', itemRows);
 
                 // 동동주가 없다면 종료
@@ -147,7 +149,7 @@ export class HellfireSupport extends BaseSupport {
                     return false;
                 }
 
-                if (!(await this.isManaRecoveryItemShortCutToA())) {
+                if (!(await this.isManaRecoveryItemShortCutToA(itemRows))) {
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(itemRows[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
                 }
@@ -184,10 +186,6 @@ export class HellfireSupport extends BaseSupport {
         await this.bttService.sendKey(BttKeyCode['Enter']);
     }
 
-    private isAbleToHellfire() {
-        return this.isAbleToCoolTime('hellfire', 9000);
-    }
-
     private async runCurseAndHellfire() {
         await this.terminateIfNotRunning();
 
@@ -206,8 +204,6 @@ export class HellfireSupport extends BaseSupport {
         await this.bttService.sendKey(BttKeyCode.Number3, 80);
         await this.bttService.sendKey(BttKeyCode.Enter);
 
-        const varName = 'hellfire';
-        this.localStorage.variable(varName, new Date().getTime());
-        await this.scriptVariable(varName, this.localStorage.variable<number>(varName)?.toString());
+        await this.hellFireTimer.set();
     }
 }
