@@ -53,7 +53,8 @@ export class HellfireSupport extends BaseSupport {
 
     protected async initialized(): Promise<void> {
         await this.switchMode(SupportMode.HellFire);
-        this.localStorage.variable<boolean>('is-invincible', (await this.scriptNumberVariable('is-invincible')) === 1);
+        this.localStorage.variable<number>('defensive', Number(await this.scriptVariable('defensive')));
+        this.localStorage.variable<number>('hellfire', Number(await this.scriptVariable('hellfire')));
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
         this.backgroundLoop();
@@ -181,7 +182,7 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private isAbleToHellfire() {
-        return this.isAbleToCoolTime('hellfire', 185000);
+        return this.isAbleToCoolTime('hellfire', 9000);
     }
 
     private async runCurseAndHellfire() {

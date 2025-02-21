@@ -43,6 +43,7 @@ export abstract class BaseSupport {
                     throw error;
                 }
 
+                await this.scriptVariable('last-error', error as string);
                 console.log(error);
             }
         } while (await this.isActiveApp());
@@ -178,14 +179,14 @@ export abstract class BaseSupport {
         return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.indexOf(keyword) !== -1);
     }
 
-    isAbleToCoolTime(key: string, coolTime: number) {
+    protected isAbleToCoolTime(key: string, coolTime: number) {
         const currentTimestamp = new Date().getTime();
         const latestTimestamp = this.localStorage.variable(key) ?? 0;
 
         return currentTimestamp - latestTimestamp >= coolTime;
     }
 
-    isAbleToDefensive() {
+    protected isAbleToDefensive() {
         return this.isAbleToCoolTime('defensive', 185000);
     }
 
