@@ -181,7 +181,9 @@ export abstract class BaseSupport {
 
     protected isAbleToCoolTime(key: string, coolTime: number) {
         const currentTimestamp = new Date().getTime();
-        const latestTimestamp = this.localStorage.variable(key) ?? 0;
+        const latestTimestamp = this.localStorage.variable<number>(key) ?? 0;
+
+        this.scriptVariable(`latest-${key}-timestamp`, latestTimestamp.toString());
 
         return currentTimestamp - latestTimestamp >= coolTime;
     }
