@@ -81,7 +81,7 @@ export abstract class BaseSupport {
 
     public async terminateIfNotRunning() {
         if (!(await this.isRunning())) {
-            throw new Error('Main loop terminated');
+            throw new TerminateException('Main loop terminated');
         }
     }
 
