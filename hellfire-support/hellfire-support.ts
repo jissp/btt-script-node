@@ -57,20 +57,20 @@ export class HellfireSupport extends BaseSupport {
         this.localStorage.variable<number>('hellfire', Number(await this.scriptVariable('hellfire')));
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
-        this.backgroundLoop();
+        // this.backgroundLoop();
     }
 
-    private async backgroundLoop() {
-        do {
-            await this.terminateIfNotRunning();
-
-            // 막걸리 체크
-            const itemText = await this.getItemBoxInfo();
-            this.localStorage.variable('item-rows', itemText.split('\n'));
-
-            await uSleep(1000);
-        } while (await this.isRunning());
-    }
+    // private async backgroundLoop() {
+    //     do {
+    //         await this.terminateIfNotRunning();
+    //
+    //         // 막걸리 체크
+    //         const itemText = await this.getItemBoxInfo();
+    //         this.localStorage.variable('item-rows', itemText.split('\n'));
+    //
+    //         await uSleep(3000);
+    //     } while (await this.isRunning());
+    // }
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기
@@ -138,13 +138,16 @@ export class HellfireSupport extends BaseSupport {
             }
 
             if (await this.isZeroMana()) {
-                if (!(await this.isManaRecoveryItemShortCutToA())) {
-                    // 동동주가 없다면 종료
-                    const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
-                    if (itemRows.length === 0 || itemRows.filter(row => row.indexOf('막걸리') !== -1).length === 0) {
-                        return false;
-                    }
+                const itemText = await this.getItemBoxInfo();
+                const itemRows = itemText.split('\n');
+                this.localStorage.variable<string[]>('item-rows', itemRows);
 
+                // 동동주가 없다면 종료
+                if (itemRows.length === 0 || itemRows.filter(row => row.indexOf('막걸리') !== -1).length === 0) {
+                    return false;
+                }
+
+                if (!(await this.isManaRecoveryItemShortCutToA())) {
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(itemRows[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
                 }

@@ -44,7 +44,6 @@ export abstract class BaseSupport {
                 }
 
                 await this.scriptVariable('last-error', error as string);
-                console.log(error);
             }
         } while (await this.isActiveApp());
     }
@@ -183,8 +182,6 @@ export abstract class BaseSupport {
         const currentTimestamp = new Date().getTime();
         const latestTimestamp = this.localStorage.variable<number>(key) ?? 0;
 
-        this.scriptVariable(`latest-${key}-timestamp`, latestTimestamp.toString());
-
         return currentTimestamp - latestTimestamp >= coolTime;
     }
 
@@ -206,7 +203,7 @@ export abstract class BaseSupport {
 
         const varName = 'defensive';
         this.localStorage.variable<number>(varName, new Date().getTime());
-        await this.bttService.stringVariable(varName, this.localStorage.variable(varName).toString());
+        await this.scriptVariable(varName, this.localStorage.variable(varName).toString());
     }
 
     async runDefensiveIfTabTab() {
@@ -215,7 +212,7 @@ export abstract class BaseSupport {
 
         const varName = 'defensive';
         this.localStorage.variable<number>(varName, new Date().getTime());
-        await this.bttService.stringVariable(varName, this.localStorage.variable(varName).toString());
+        await this.scriptVariable(varName, this.localStorage.variable(varName).toString());
     }
 
     async runCurse(isNext?: boolean) {
