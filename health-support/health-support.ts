@@ -36,14 +36,18 @@ export class HealthSupport extends BaseSupport {
     protected async initialized(): Promise<void> {
         this.localStorage.variable<boolean>('is-invincible', (await this.scriptNumberVariable('is-invincible')) === 1);
 
-        // this.backgroundLoop();
+        // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
+        this.backgroundLoop();
     }
 
     private async backgroundLoop() {
         do {
             await this.terminateIfNotRunning();
+
+            // 버프 체크
             await this.trySelfBuff();
-            await uSleep(5000);
+
+            await uSleep(1000);
         } while(await this.isRunning());
     }
 
