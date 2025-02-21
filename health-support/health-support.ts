@@ -127,7 +127,7 @@ export class HealthSupport extends BaseSupport {
 
             if (isModeratelyEmptyMana && healLoop === 0) {
                 await this.bttService.sendKey(BttKeyCode.Number1, 100);
-            } else if (isModeratelyEmptyMana && this.whiteTigerTimer.isExpired()) {
+            } else if (!isModeratelyEmptyMana && this.whiteTigerTimer.isExpired()) {
                 await this.runWhiteTigerHealing();
             } else {
                 await this.bttService.sendKey(BttKeyCode.Number2, 180);
