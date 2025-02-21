@@ -134,7 +134,7 @@ export abstract class BaseSupport {
 
     async isZeroMana() {
         return this.bttService.imageSearch({
-            imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMp : SearchImageBase64Type.ZeroMpMinimum,
+            imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMpMinimum : SearchImageBase64Type.ZeroMp,
             threshold: 0.95,
             searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
