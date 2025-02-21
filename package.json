@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "start:health-support": "npx tsc --build --clean && ts-node health-support/index.ts",
+    "build:health-support": "esbuild health-support/health-support.ts --bundle --outfile=dist/health-support.js --platform=node --format=cjs --inject:reflect-metadata"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "build-url-ts": "^6.1.8",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.5.1",
+    "reflect-metadata": "^0.2.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsyringe": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4"
+  }
+}

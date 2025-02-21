@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": false,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "inlineSources": true,
+    "incremental": true,
+    "strict": true,
+    "baseUrl": "./",
+    "outDir": "./",
+    "composite": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "exclude": [
+    "node_modules",
+    "test",
+    "src",
+    "**/*spec.ts",
+    "**/index.js"
+  ]
+}
