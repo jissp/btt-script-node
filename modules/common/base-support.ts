@@ -306,14 +306,12 @@ export abstract class BaseSupport {
     }
 
     async isManaRecoveryItemShortCutToA() {
-        // const currentTimestamp = new Date().getTime();
-
-        // if (this.lastItemRows.length === 0 || currentTimestamp - this.lastCheckDongDongJuTimestamp > 2000) {
-        const itemText = await this.getItemBoxInfo();
-        const lastItemRows = itemText.split('\n');
-        // }
-
-        const firstItem = itemText[0];
+        const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
+        if (itemRows.length === 0) {
+            return false;
+        }
+        
+        const firstItem = itemRows[0];
         const [, shortCut, itemName] = this.extractItemShortCutAndName(firstItem);
 
         return shortCut === 'a' && ['동동주', '막걸리'].filter(name => itemName.indexOf(name) !== -1).length > 0;
