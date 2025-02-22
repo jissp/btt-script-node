@@ -8,21 +8,23 @@ enum SupportMode {
     HellFire = 'hellfire',
     // HellFireWithoutFreeze = 'hellfire-without-freeze',
     Freeze = 'freeze',
+    None = 'none',
 }
 
 @injectable()
 export class HellfireSupport extends BaseSupport {
     private mode: SupportMode = SupportMode.HellFire;
-    private freezeModeStartTimestamp: number = 0;
 
     private loopCheckManaTimer: Timer;
     private hellFireTimer: Timer;
+    private freezeModeTimer: Timer;
 
     constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
 
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
+        this.freezeModeTimer = this.timerFactory.create('freeze-mode', 5000);
     }
 
     protected async handle(): Promise<void> {
@@ -45,7 +47,7 @@ export class HellfireSupport extends BaseSupport {
             //     break;
             case SupportMode.Freeze:
                 if (isChanged) {
-                    this.freezeModeStartTimestamp = new Date().getTime();
+                    await this.freezeModeTimer.set();
                 }
                 await this.runFreezeMode();
                 break;
@@ -53,7 +55,7 @@ export class HellfireSupport extends BaseSupport {
                 await uSleep(500);
         }
 
-        await uSleep(50);
+        await uSleep(25);
     }
 
     protected async initialized(): Promise<void> {
@@ -131,8 +133,11 @@ export class HellfireSupport extends BaseSupport {
 
     private async runFreezeMode() {
         for (let freezeCount = 0; freezeCount < 5; freezeCount++) {
-            const currentTime = new Date().getTime();
-            if (this.mode === SupportMode.Freeze && currentTime - this.freezeModeStartTimestamp > 5000) {
+            if (this.mode === SupportMode.None) {
+                return;
+            }
+
+            if (this.mode === SupportMode.Freeze && this.freezeModeTimer.isExpired()) {
                 await this.switchMode(SupportMode.HellFire);
                 return;
             }
@@ -160,7 +165,7 @@ export class HellfireSupport extends BaseSupport {
             BttKeyCode.ArrowRight,
         ]) {
             await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
-            await uSleep(50);
+            await uSleep(60);
         }
     }
 
