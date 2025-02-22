@@ -60,6 +60,14 @@ export class HellfireSupport extends BaseSupport {
 
         await this.hellFireTimer.init();
 
+        // 마나가 없다면 회복 하기
+        if (await this.isEmptyMana()) {
+            await this.tryManaRecovery(99);
+
+            // 공력증강 후 피 회복
+            await this.trySelfHelling();
+        }
+
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
         // this.backgroundLoop();
     }
@@ -77,15 +85,6 @@ export class HellfireSupport extends BaseSupport {
     // }
 
     private async runHellFireMode(isFreeze: boolean) {
-        // 마나가 없다면 회복 하기
-        if (await this.isEmptyMana()) {
-            await this.tryManaRecovery(99);
-
-            // 공력증강 후 피 회복
-            await this.trySelfHelling();
-        }
-
-
         if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
 
@@ -107,7 +106,14 @@ export class HellfireSupport extends BaseSupport {
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
         await this.runCurseAndHellfire();
-        await uSleep(200);
+
+        // 마나가 없다면 회복 하기
+        if (await this.isEmptyMana()) {
+            await this.tryManaRecovery(99);
+
+            // 공력증강 후 피 회복
+            await this.trySelfHelling();
+        }
 
         return true;
     }
