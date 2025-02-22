@@ -106,6 +106,7 @@ export class HellfireSupport extends BaseSupport {
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
         await this.runCurseAndHellfire();
+        await uSleep(200);
 
         // 마나가 없다면 회복 하기
         if (await this.isEmptyMana()) {
