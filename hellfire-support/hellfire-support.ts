@@ -235,26 +235,13 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async trySelfHelling() {
-        let healingCount = 0;
         do {
+            await this.selfHealing();
+            await uSleep(50);
+
             if (this.defensiveTimer.isExpired()) {
                 await this.runDefensive(true);
             }
-
-            // 회복 횟수가 5번이 넘어간다는건 공격받고 있을 수 있다는 이야기
-            // if (healingCount > 5) {
-            //     for (const arrowKeyCode of [
-            //         BttKeyCode.ArrowUp,
-            //         BttKeyCode.ArrowDown,
-            //         BttKeyCode.ArrowLeft,
-            //         BttKeyCode.ArrowRight,
-            //     ]) {
-            //         await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
-            //     }
-            // }
-
-            await this.selfHealing();
-            await uSleep(50);
         } while (await this.isEmptyHealth());
     }
 
