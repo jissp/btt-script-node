@@ -137,11 +137,10 @@ export class HellfireSupport extends BaseSupport {
                 await this.trySafetyFreeze();
             }
 
-            if (Math.round(Math.random() * 10) % 2 === 0) {
-                await this.runTargetBlind(true);
-            } else {
-                await this.runTargetFreeze(true);
-            }
+            const spellKeyCode = Math.round(Math.random() * 10) % 2 === 0 ? BttKeyCode.Number6 : BttKeyCode.Number7;
+            await this.castSpellOnTarget(spellKeyCode, {
+                isNextTarget: true,
+            });
 
             await uSleep(100);
         }
@@ -197,26 +196,6 @@ export class HellfireSupport extends BaseSupport {
         return true;
     }
 
-    private async runTargetFreeze(isNext: boolean) {
-        await this.terminateIfNotRunning();
-
-        await this.bttService.sendKey(BttKeyCode.Number6, 80);
-        if (isNext) {
-            await this.bttService.sendKey(BttKeyCode.ArrowUp, 80);
-        }
-        await this.bttService.sendKey(BttKeyCode.Enter);
-    }
-
-    private async runTargetBlind(isNext: boolean) {
-        await this.terminateIfNotRunning();
-
-        await this.bttService.sendKey(BttKeyCode.Number7, 80);
-        if (isNext) {
-            await this.bttService.sendKey(BttKeyCode['ArrowUp'], 80);
-        }
-        await this.bttService.sendKey(BttKeyCode['Enter']);
-    }
-
     private async runCurseAndHellfire() {
         await this.terminateIfNotRunning();
 
@@ -232,8 +211,7 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async runHellFire() {
-        await this.bttService.sendKey(BttKeyCode.Number3, 80);
-        await this.bttService.sendKey(BttKeyCode.Enter);
+        await this.castSpellOnTarget(BttKeyCode.Number6);
 
         await this.hellFireTimer.set();
     }
@@ -244,6 +222,7 @@ export class HellfireSupport extends BaseSupport {
             await this.terminateIfNotRunning();
 
             await this.selfHealing();
+            await uSleep(80);
             if (healingCount++ % 5 === 0 && (await this.isZeroHealth())) {
                 break;
             }

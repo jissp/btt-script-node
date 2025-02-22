@@ -5,6 +5,7 @@ import { BttClient, BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } f
 import { TerminateException } from './terminate.exception';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
+import { uSleep } from '../utils';
 
 export abstract class BaseSupport {
     protected readonly bttService: BttService;
@@ -172,17 +173,19 @@ export abstract class BaseSupport {
     }
 
     async selfHealing() {
-        await this.bttService.sendKey(BttKeyCode.Number2, 80);
-        await this.bttService.sendKey(BttKeyCode.Home, 80);
-        await this.bttService.sendKey(BttKeyCode.Enter, 80);
+        await this.castSpellOnTarget(BttKeyCode.Number2, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.Home,
+        });
     }
 
     async checkMonsterTarget(isNext: boolean) {
-        await this.bttService.sendKey(BttKeyCode.Number6, 80);
-        if (isNext) {
-            await this.bttService.sendKey(BttKeyCode['ArrowUp'], 80);
-        }
-        await this.bttService.sendKey(BttKeyCode['Enter'], 150);
+        await this.castSpellOnTarget(BttKeyCode.Number6, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.ArrowUp,
+        });
+
+        await uSleep(100);
 
         const lastGameLog = await this.getLastGameLog();
 
@@ -190,16 +193,15 @@ export abstract class BaseSupport {
     }
 
     async runDefensive(isSelf: boolean) {
-        await this.bttService.sendKey(BttKeyCode.Number8, 80);
-        if (isSelf) {
-            await this.bttService.sendKey(BttKeyCode['Home'], 80);
-        }
-        await this.bttService.sendKey(BttKeyCode['Enter'], 80);
-        await this.bttService.sendKey(BttKeyCode.Number9, 80);
-        if (isSelf) {
-            await this.bttService.sendKey(BttKeyCode['Home'], 80);
-        }
-        await this.bttService.sendKey(BttKeyCode['Enter']);
+        await this.castSpellOnTarget(BttKeyCode.Number8, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.Home,
+        });
+        await uSleep(80);
+        await this.castSpellOnTarget(BttKeyCode.Number9, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.Home,
+        });
 
         await this.defensiveTimer.set();
     }
@@ -212,11 +214,10 @@ export abstract class BaseSupport {
     }
 
     async runCurse(isNext?: boolean) {
-        await this.bttService.sendKey(BttKeyCode.Number4, 80);
-        if (isNext) {
-            await this.bttService.sendKey(BttKeyCode.ArrowUp, 80);
-        }
-        await this.bttService.sendKey(BttKeyCode['Enter']);
+        await this.castSpellOnTarget(BttKeyCode.Number4, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.ArrowUp,
+        });
     }
 
     async useManaRecoveryItem() {
@@ -334,7 +335,7 @@ export abstract class BaseSupport {
         await this.bttService.sendKey(BttKeyCode[shortCutA], 80);
         await this.bttService.sendKey(BttKeyCode[','], 80);
         await this.bttService.sendKey(BttKeyCode[shortCutB], 80);
-        await this.bttService.sendKey(BttKeyCode['Enter']);
+        await this.bttService.sendKey(BttKeyCode.Enter);
     }
 
     calcCharacterCoordRect() {
@@ -372,5 +373,21 @@ export abstract class BaseSupport {
 
     async getLastChatMessage() {
         return this.bttService.captureWithExtractText(this.calcLastChatMessage());
+    }
+
+    public async castSpellOnTarget(
+        keyCode: BttKeyCode,
+        options?: {
+            isNextTarget?: boolean;
+            nextTargetKeyCode?: BttKeyCode;
+        },
+    ) {
+        await this.terminateIfNotRunning();
+
+        await this.bttService.sendKey(keyCode, 60);
+        if (options?.isNextTarget) {
+            await this.bttService.sendKey(options?.nextTargetKeyCode ?? BttKeyCode.ArrowUp, 60);
+        }
+        await this.bttService.sendKey(BttKeyCode.Enter);
     }
 }

@@ -162,9 +162,11 @@ export class HealthSupport extends BaseSupport {
 
     private async tryResurrection(waitTimestamp = 500) {
         await this.bttService.sendKey(BttKeyCode.ESC, waitTimestamp);
-        await this.bttService.sendKey(BttKeyCode.Number6, 80);
-        await this.bttService.sendKey(BttKeyCode.Home, 80);
-        await this.bttService.sendKey(BttKeyCode.Enter);
+
+        await this.castSpellOnTarget(BttKeyCode.Number6, {
+            isNextTarget: true,
+            nextTargetKeyCode: BttKeyCode.Home,
+        });
     }
 
     private async tryManaRecovery(limitCount = 5) {
