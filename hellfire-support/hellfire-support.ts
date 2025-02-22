@@ -200,6 +200,7 @@ export class HellfireSupport extends BaseSupport {
         await this.terminateIfNotRunning();
 
         await this.runCurse();
+        await uSleep(50);
 
         const log = await this.getLastGameLog();
         if (log.indexOf('마법을 쓸 수') !== -1) {
@@ -211,7 +212,7 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async runHellFire() {
-        await this.castSpellOnTarget(BttKeyCode.Number6);
+        await this.castSpellOnTarget(BttKeyCode.Number3);
 
         await this.hellFireTimer.set();
     }
