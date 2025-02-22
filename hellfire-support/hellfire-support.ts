@@ -82,9 +82,7 @@ export class HellfireSupport extends BaseSupport {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
-            if (await this.isEmptyHealth()) {
-                await this.trySelfHelling();
-            }
+            await this.trySelfHelling();
         }
 
 
