@@ -165,48 +165,43 @@ export class BttService {
         });
     }
 
-    async waitForClipboardChange(maxWaitTime: number) {
-        if (!maxWaitTime) {
-            maxWaitTime = 3;
-        }
-
+    async waitForClipboardChange(waitMilliSeconds: number = 3000) {
         return this.client.triggerAction({
             BTTActionCategory: 0,
             BTTIsPureAction: 1,
             BTTPredefinedActionType: 499,
             BTTPredefinedActionName: 'Pause Until Clipboard Changes  or  Wait For Change Of Clipboard Contents',
-            BTTAdditionalActionData: JSON.stringify({ BTTActionWaitForClipboardTimeout: maxWaitTime }),
-            BTTEnabled2: 1,
+            BTTAdditionalActionData: JSON.stringify({
+                BTTActionWaitForClipboardTimeout: 1,
+            }),
+            BTTEnabled2: 0,
         });
     }
 
     async extractTextFromClipboard(): Promise<string> {
         const actionData = {
             BTTOCRSourceType: 0,
-            // "BTTOCRCustomWords": "customwords",
-            // "BTTOCRLanguages": "ko-KR",
+            BTTOCRCopyToClipboard: 0,
             BTTOCRAutoDetectLanguage: true,
-            BTTOCRJoinBasedOnScreenCoordinates: false,
+            // "BTTOCRLanguages": "ko-KR",
+            // "BTTOCRCustomWords": "customwords",
             BTTOCRJoinFoundStringsWithCharacter: '\\n',
+            BTTOCRJoinBasedOnScreenCoordinates: false,
         };
 
         return this.client.triggerAction<string>({
-            BTTActionCategory: 0,
             BTTIsPureAction: 1,
             BTTPredefinedActionType: 498,
-            BTTPredefinedActionName: 'OCR  or  Recognize  or  Extract Text From Clipboard Contents or Image File',
             BTTAdditionalActionData: JSON.stringify(actionData),
             BTTEnabled2: 1,
         });
     }
 
-    async captureWithExtractText(rect: WindowRect, sleepMillisecond?: number): Promise<string> {
+    async captureWithExtractText(rect: WindowRect): Promise<string> {
         await this.captureToClipboard(rect);
-        // await this.waitForClipboardChange(1);
-        if (sleepMillisecond) {
-            await uSleep(sleepMillisecond);
-        }
-
+        await uSleep(50);
+        await this.waitForClipboardChange(3);
+        await uSleep(50);
         return this.extractTextFromClipboard();
     }
 }

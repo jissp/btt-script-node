@@ -249,7 +249,7 @@ export abstract class BaseSupport {
     }
 
     async getLastGameLog() {
-        return this.bttService.captureWithExtractText(this.calcLastGameLogRect(), 80);
+        return this.bttService.captureWithExtractText(this.calcLastGameLogRect());
     }
 
     calcBuffInfoRect() {
@@ -296,7 +296,7 @@ export abstract class BaseSupport {
     async getItemBoxInfo(isSplit: true): Promise<string[]>;
     async getItemBoxInfo(isSplit: false): Promise<string>;
     async getItemBoxInfo(isSplit: boolean) {
-        const itemText = await this.bttService.captureWithExtractText(this.calcItemRect(), 80);
+        const itemText = await this.bttService.captureWithExtractText(this.calcItemRect());
 
         if (isSplit) {
             return itemText.split('\n');
