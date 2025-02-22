@@ -220,8 +220,7 @@ export class HellfireSupport extends BaseSupport {
         if (needTryDefensiveFreeze && await this.isEmptyHealth()) {
             await this.trySelfHelling();
             await this.trySafetyFreeze();
-
-            return;
+            await uSleep(100);
         }
 
         await this.terminateIfNotRunning();
