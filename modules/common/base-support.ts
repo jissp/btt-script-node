@@ -193,12 +193,12 @@ export abstract class BaseSupport {
 
     async runDefensive(isSelf: boolean) {
         await this.castSpellOnTarget(BttKeyCode.Number8, {
-            isNextTarget: true,
+            isNextTarget: isSelf,
             nextTargetKeyCode: BttKeyCode.Home,
         });
         await uSleep(80);
         await this.castSpellOnTarget(BttKeyCode.Number9, {
-            isNextTarget: true,
+            isNextTarget: isSelf,
             nextTargetKeyCode: BttKeyCode.Home,
         });
 
