@@ -16,12 +16,14 @@ export class HellfireSupport extends BaseSupport {
     private mode: SupportMode = SupportMode.HellFire;
     private freezeModeStartTimestamp: number = 0;
 
+    private loopCheckManaTimer: Timer;
     private hellFireTimer: Timer;
 
     constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
 
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
+        this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
     }
 
     protected async handle(): Promise<void> {
@@ -85,6 +87,16 @@ export class HellfireSupport extends BaseSupport {
     // }
 
     private async runHellFireMode(isFreeze: boolean) {
+        // 마나가 없다면 회복 하기
+        if (this.loopCheckManaTimer.isExpired() && await this.isEmptyMana()) {
+            await this.tryManaRecovery(99);
+
+            // 공력증강 후 피 회복
+            await this.trySelfHelling();
+
+            await this.loopCheckManaTimer.set();
+        }
+
         if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
 
@@ -107,14 +119,6 @@ export class HellfireSupport extends BaseSupport {
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
         await this.runCurseAndHellfire();
         await uSleep(200);
-
-        // 마나가 없다면 회복 하기
-        if (await this.isEmptyMana()) {
-            await this.tryManaRecovery(99);
-
-            // 공력증강 후 피 회복
-            await this.trySelfHelling();
-        }
 
         return true;
     }
