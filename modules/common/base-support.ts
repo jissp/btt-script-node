@@ -1,5 +1,5 @@
 import { container } from 'tsyringe';
-import { SearchImageBase64Type, WindowRect } from './common.interface';
+import { ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { LocalStorage } from '../local-storage';
 import { BttClient, BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { TerminateException } from './terminate.exception';
@@ -317,10 +317,9 @@ export abstract class BaseSupport {
             return false;
         }
 
-        const firstItem = itemRows[0];
-        const [, shortCut, itemName] = this.extractItemShortCutAndName(firstItem);
+        const [, shortCut, itemName] = this.extractItemShortCutAndName(itemRows[0]);
 
-        return shortCut === 'a' && ['동동주', '막걸리'].filter(name => itemName.indexOf(name) !== -1).length > 0;
+        return shortCut === 'a' && ManaRecoveryItems.filter(name => itemName.includes(name)).length > 0;
     }
 
     async changeItemAToB(shortCutA: keyof typeof BttKeyCode, shortCutB: keyof typeof BttKeyCode) {
