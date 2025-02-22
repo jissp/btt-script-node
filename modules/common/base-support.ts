@@ -181,7 +181,7 @@ export abstract class BaseSupport {
 
     async checkMonsterTarget(isNext: boolean) {
         await this.castSpellOnTarget(BttKeyCode.Number6, {
-            isNextTarget: true,
+            isNextTarget: isNext,
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
 
@@ -215,7 +215,7 @@ export abstract class BaseSupport {
 
     async runCurse(isNext?: boolean) {
         await this.castSpellOnTarget(BttKeyCode.Number4, {
-            isNextTarget: true,
+            isNextTarget: isNext,
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
     }
