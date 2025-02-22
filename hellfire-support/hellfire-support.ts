@@ -3,6 +3,7 @@ import { BaseSupport } from '../modules/common/base-support';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
+import { ManaRecoveryItems } from '../modules/common/common.interface';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -144,13 +145,15 @@ export class HellfireSupport extends BaseSupport {
                 const itemRows = await this.getItemBoxInfo(true);
                 this.localStorage.variable<string[]>('item-rows', itemRows);
 
-                // 동동주가 없다면 종료
-                if (itemRows.length === 0 || itemRows.filter(row => row.indexOf('막걸리') !== -1).length === 0) {
+                const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
+
+                // 마나회복용 아이템이 없다면 종료
+                if (manaRecoveryItems.length === 0) {
                     return false;
                 }
 
-                if (!(await this.isManaRecoveryItemShortCutToA(itemRows))) {
-                    const [, shortCut, itemName] = this.extractItemShortCutAndName(itemRows[0]);
+                if (!(await this.isManaRecoveryItemShortCutToA(manaRecoveryItems))) {
+                    const [, shortCut, itemName] = this.extractItemShortCutAndName(manaRecoveryItems[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
                 }
 
