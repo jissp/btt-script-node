@@ -1,9 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseSupport } from '../modules/common/base-support';
+import { BaseSupport, Latency, ManaRecoveryItems } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
-import { ManaRecoveryItems } from '../modules/common/common.interface';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -34,7 +33,7 @@ export class HellfireSupport extends BaseSupport {
 
         const isChanged = oldMode !== this.mode;
         if (isChanged) {
-            await this.bttService.sendKey(BttKeyCode.ESC, 80);
+            await this.bttService.sendKey(BttKeyCode.ESC, Latency.KeyCode);
         }
 
         switch (this.mode) {
@@ -154,6 +153,7 @@ export class HellfireSupport extends BaseSupport {
             BttKeyCode.ArrowRight,
         ]) {
             await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
+            await uSleep(50);
         }
     }
 
@@ -190,7 +190,7 @@ export class HellfireSupport extends BaseSupport {
 
             await this.terminateIfNotRunning();
 
-            await this.bttService.sendKey(BttKeyCode.Number1, 50);
+            await this.bttService.sendKey(BttKeyCode.Number1, Latency.KeyCode);
         } while (await this.isEmptyMana());
 
         return true;
@@ -223,7 +223,7 @@ export class HellfireSupport extends BaseSupport {
             await this.terminateIfNotRunning();
 
             await this.selfHealing();
-            await uSleep(80);
+            await uSleep(50);
             if (healingCount++ % 5 === 0 && (await this.isZeroHealth())) {
                 break;
             }
@@ -236,9 +236,9 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async runDefensiveFreezeByKeyCode(arrowKeyCode: BttKeyCode) {
-        await this.bttService.sendKey(BttKeyCode.Number6, 60);
-        await this.bttService.sendKey(BttKeyCode.Home, 60);
-        await this.bttService.sendKey(arrowKeyCode, 60);
-        await this.bttService.sendKey(BttKeyCode.Enter, 70);
+        await this.bttService.sendKey(BttKeyCode.Number6, Latency.KeyCode);
+        await this.bttService.sendKey(BttKeyCode.Home, Latency.KeyCode);
+        await this.bttService.sendKey(arrowKeyCode, Latency.KeyCode);
+        await this.bttService.sendKey(BttKeyCode.Enter);
     }
 }

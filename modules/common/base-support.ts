@@ -1,5 +1,5 @@
 import { container } from 'tsyringe';
-import { ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
+import { Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { LocalStorage } from '../local-storage';
 import { BttClient, BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { TerminateException } from './terminate.exception';
@@ -166,8 +166,7 @@ export abstract class BaseSupport {
 
     public async runTabTab() {
         await this.bttService.wrapKeyboardInputBlock(async () => {
-            await this.bttService.sendKey(BttKeyCode.Tab, 200);
-
+            await this.bttService.sendKey(BttKeyCode.Tab, Latency.Tab);
             return this.bttService.sendKey(BttKeyCode.Tab);
         });
     }
@@ -207,8 +206,8 @@ export abstract class BaseSupport {
     }
 
     async runDefensiveIfTabTab() {
-        await this.bttService.sendKey(BttKeyCode.Number8, 80);
-        await this.bttService.sendKey(BttKeyCode.Number9, 80);
+        await this.bttService.sendKey(BttKeyCode.Number8, Latency.KeyCode);
+        await this.bttService.sendKey(BttKeyCode.Number9);
 
         await this.defensiveTimer.set();
     }
@@ -221,7 +220,7 @@ export abstract class BaseSupport {
     }
 
     async useManaRecoveryItem() {
-        await this.bttService.sendKey(BttKeyCode['u'], 80);
+        await this.bttService.sendKey(BttKeyCode['u'], Latency.KeyCode);
         await this.bttService.sendKey(BttKeyCode['a']);
     }
 
@@ -332,9 +331,9 @@ export abstract class BaseSupport {
         }
 
         await this.bttService.sendKey(BttKeyCode.c, 500); // C
-        await this.bttService.sendKey(BttKeyCode[shortCutA], 80);
-        await this.bttService.sendKey(BttKeyCode[','], 80);
-        await this.bttService.sendKey(BttKeyCode[shortCutB], 80);
+        await this.bttService.sendKey(BttKeyCode[shortCutA], Latency.KeyCode);
+        await this.bttService.sendKey(BttKeyCode[','], Latency.KeyCode);
+        await this.bttService.sendKey(BttKeyCode[shortCutB], Latency.KeyCode);
         await this.bttService.sendKey(BttKeyCode.Enter);
     }
 
@@ -384,9 +383,9 @@ export abstract class BaseSupport {
     ) {
         await this.terminateIfNotRunning();
 
-        await this.bttService.sendKey(keyCode, 60);
+        await this.bttService.sendKey(keyCode, Latency.KeyCode);
         if (options?.isNextTarget) {
-            await this.bttService.sendKey(options?.nextTargetKeyCode ?? BttKeyCode.ArrowUp, 60);
+            await this.bttService.sendKey(options?.nextTargetKeyCode ?? BttKeyCode.ArrowUp, Latency.KeyCode);
         }
         await this.bttService.sendKey(BttKeyCode.Enter);
     }

@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseSupport } from '../modules/common/base-support';
+import { BaseSupport, Latency } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
@@ -69,7 +69,7 @@ export class HealthSupport extends BaseSupport {
 
     private async handleMode(mode: SupportMode, isChanged: boolean) {
         if (isChanged) {
-            await this.bttService.sendKey(BttKeyCode.ESC, 80);
+            await this.bttService.sendKey(BttKeyCode.ESC, Latency.KeyCode);
         }
 
         switch (mode) {
