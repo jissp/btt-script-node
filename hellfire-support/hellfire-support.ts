@@ -223,7 +223,7 @@ export class HellfireSupport extends BaseSupport {
             await this.terminateIfNotRunning();
 
             await this.selfHealing();
-            await uSleep(50);
+            await uSleep(70);
             if (healingCount++ % 5 === 0 && (await this.isZeroHealth())) {
                 break;
             }
