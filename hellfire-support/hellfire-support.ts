@@ -83,7 +83,7 @@ export class HellfireSupport extends BaseSupport {
         }
 
         // 공력증강 후 피 회복
-        if(await this.isEmptyHealth()) {
+        if (await this.isEmptyHealth()) {
             await this.trySelfHelling();
         }
 
@@ -98,6 +98,13 @@ export class HellfireSupport extends BaseSupport {
         }
 
         await uSleep(600);
+
+        // 헬파이어 날리기 전에 공격받고 있는지 체크
+        if (await this.isEmptyHealth()) {
+            await this.trySelfHelling();
+            await this.trySafetyFreeze();
+            await uSleep(100);
+        }
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
         await this.runCurseAndHellfire();
@@ -115,17 +122,9 @@ export class HellfireSupport extends BaseSupport {
             }
 
             // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
-            if(await this.isEmptyHealth()) {
+            if (await this.isEmptyHealth()) {
                 await this.trySelfHelling();
-
-                for (const arrowKeyCode of [
-                    BttKeyCode.ArrowUp,
-                    BttKeyCode.ArrowDown,
-                    BttKeyCode.ArrowLeft,
-                    BttKeyCode.ArrowRight,
-                ]) {
-                    await this.tryDefensiveFreeze(arrowKeyCode);
-                }
+                await this.trySafetyFreeze();
             }
 
             if (Math.round(Math.random() * 10) % 2 === 0) {
@@ -135,6 +134,17 @@ export class HellfireSupport extends BaseSupport {
             }
 
             await uSleep(100);
+        }
+    }
+
+    private async trySafetyFreeze() {
+        for (const arrowKeyCode of [
+            BttKeyCode.ArrowUp,
+            BttKeyCode.ArrowDown,
+            BttKeyCode.ArrowLeft,
+            BttKeyCode.ArrowRight,
+        ]) {
+            await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
         }
     }
 
@@ -233,7 +243,7 @@ export class HellfireSupport extends BaseSupport {
             //         BttKeyCode.ArrowLeft,
             //         BttKeyCode.ArrowRight,
             //     ]) {
-            //         await this.tryDefensiveFreeze(arrowKeyCode);
+            //         await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
             //     }
             // }
 
@@ -242,10 +252,10 @@ export class HellfireSupport extends BaseSupport {
         } while (await this.isEmptyHealth());
     }
 
-    private async tryDefensiveFreeze(arrowKeyCode: BttKeyCode) {
-        await this.bttService.sendKey(BttKeyCode.Number6, 50);
-        await this.bttService.sendKey(BttKeyCode.Home, 50);
-        await this.bttService.sendKey(arrowKeyCode, 50);
-        await this.bttService.sendKey(BttKeyCode.Enter, 50);
+    private async runDefensiveFreezeByKeyCode(arrowKeyCode: BttKeyCode) {
+        await this.bttService.sendKey(BttKeyCode.Number6, 60);
+        await this.bttService.sendKey(BttKeyCode.Home, 60);
+        await this.bttService.sendKey(arrowKeyCode, 60);
+        await this.bttService.sendKey(BttKeyCode.Enter, 70);
     }
 }
