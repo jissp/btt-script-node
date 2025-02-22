@@ -83,7 +83,9 @@ export class HellfireSupport extends BaseSupport {
         }
 
         // 공력증강 후 피 회복
-        await this.trySelfHelling();
+        if(await this.isEmptyHealth()) {
+            await this.trySelfHelling();
+        }
 
         if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
@@ -110,6 +112,20 @@ export class HellfireSupport extends BaseSupport {
             if (this.mode === SupportMode.Freeze && currentTime - this.freezeModeStartTimestamp > 5000) {
                 await this.switchMode(SupportMode.HellFire);
                 return;
+            }
+
+            // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
+            if(await this.isEmptyHealth()) {
+                await this.trySelfHelling();
+
+                for (const arrowKeyCode of [
+                    BttKeyCode.ArrowUp,
+                    BttKeyCode.ArrowDown,
+                    BttKeyCode.ArrowLeft,
+                    BttKeyCode.ArrowRight,
+                ]) {
+                    await this.tryDefensiveFreeze(arrowKeyCode);
+                }
             }
 
             if (Math.round(Math.random() * 10) % 2 === 0) {
@@ -203,29 +219,27 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async trySelfHelling() {
-        if(await this.isEmptyHealth()) {
-            let healingCount = 0;
-            do {
-                if (this.defensiveTimer.isExpired()) {
-                    await this.runDefensive(true);
-                }
+        let healingCount = 0;
+        do {
+            if (this.defensiveTimer.isExpired()) {
+                await this.runDefensive(true);
+            }
 
-                // 회복 횟수가 5번이 넘어간다는건 공격받고 있을 수 있다는 이야기
-                if (healingCount > 5) {
-                    for (const arrowKeyCode of [
-                        BttKeyCode.ArrowUp,
-                        BttKeyCode.ArrowDown,
-                        BttKeyCode.ArrowLeft,
-                        BttKeyCode.ArrowRight,
-                    ]) {
-                        await this.tryDefensiveFreeze(arrowKeyCode);
-                    }
-                }
+            // 회복 횟수가 5번이 넘어간다는건 공격받고 있을 수 있다는 이야기
+            // if (healingCount > 5) {
+            //     for (const arrowKeyCode of [
+            //         BttKeyCode.ArrowUp,
+            //         BttKeyCode.ArrowDown,
+            //         BttKeyCode.ArrowLeft,
+            //         BttKeyCode.ArrowRight,
+            //     ]) {
+            //         await this.tryDefensiveFreeze(arrowKeyCode);
+            //     }
+            // }
 
-                await this.selfHealing();
-                await uSleep(100);
-            } while (await this.isEmptyHealth());
-        }
+            await this.selfHealing();
+            await uSleep(100);
+        } while (await this.isEmptyHealth());
     }
 
     private async tryDefensiveFreeze(arrowKeyCode: BttKeyCode) {
