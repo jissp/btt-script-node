@@ -80,12 +80,13 @@ export class HellfireSupport extends BaseSupport {
         // 마나가 없다면 회복 하기
         if (await this.isEmptyMana()) {
             await this.tryManaRecovery(99);
+
+            // 공력증강 후 피 회복
+            if (await this.isEmptyHealth()) {
+                await this.trySelfHelling();
+            }
         }
 
-        // 공력증강 후 피 회복
-        if (await this.isEmptyHealth()) {
-            await this.trySelfHelling();
-        }
 
         if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
