@@ -202,7 +202,7 @@ export class BttService {
 
     async captureWithExtractText(rect: WindowRect, sleepMillisecond?: number): Promise<string> {
         await this.captureToClipboard(rect);
-        await this.waitForClipboardChange(1);
+        // await this.waitForClipboardChange(1);
         if (sleepMillisecond) {
             await uSleep(sleepMillisecond);
         }
