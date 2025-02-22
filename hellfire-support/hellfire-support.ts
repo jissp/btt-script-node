@@ -102,6 +102,13 @@ export class HellfireSupport extends BaseSupport {
             return false;
         }
 
+        // 몬스터 찾기 전 체력이 부족한 경우 공격받는 중일 수 있음.
+        if (await this.isEmptyHealth()) {
+            await this.trySelfHelling();
+            await this.trySafetyFreeze();
+            await uSleep(100);
+        }
+
         if (!(await this.checkMonsterTarget(true))) {
             return false;
         }
