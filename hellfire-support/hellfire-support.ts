@@ -106,7 +106,7 @@ export class HellfireSupport extends BaseSupport {
         }
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
-        await this.runCurseAndHellfire(true);
+        await this.runCurseAndHellfire();
         await uSleep(200);
 
         return true;
@@ -206,7 +206,7 @@ export class HellfireSupport extends BaseSupport {
         await this.bttService.sendKey(BttKeyCode['Enter']);
     }
 
-    private async runCurseAndHellfire(needTryDefensiveFreeze: boolean) {
+    private async runCurseAndHellfire() {
         await this.terminateIfNotRunning();
 
         await this.runCurse();
@@ -214,13 +214,6 @@ export class HellfireSupport extends BaseSupport {
         const log = await this.getLastGameLog();
         if (log.indexOf('마법을 쓸 수') !== -1) {
             return;
-        }
-
-        // 헬파이어 날리기 전에 공격받고 있는지 체크
-        if (needTryDefensiveFreeze && await this.isEmptyHealth()) {
-            await this.trySelfHelling();
-            await this.trySafetyFreeze();
-            await uSleep(100);
         }
 
         await this.terminateIfNotRunning();
