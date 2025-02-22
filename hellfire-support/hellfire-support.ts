@@ -238,7 +238,7 @@ export class HellfireSupport extends BaseSupport {
             // }
 
             await this.selfHealing();
-            await uSleep(100);
+            await uSleep(50);
         } while (await this.isEmptyHealth());
     }
 
