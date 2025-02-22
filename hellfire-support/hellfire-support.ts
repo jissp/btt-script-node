@@ -88,7 +88,7 @@ export class HellfireSupport extends BaseSupport {
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
-        if (this.loopCheckManaTimer.isExpired() && await this.isEmptyMana()) {
+        if (this.loopCheckManaTimer.isExpired() && (await this.isEmptyMana())) {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
@@ -239,8 +239,14 @@ export class HellfireSupport extends BaseSupport {
     }
 
     private async trySelfHelling() {
+        let healingCount = 0;
         do {
+            await this.terminateIfNotRunning();
+
             await this.selfHealing();
+            if (healingCount++ % 5 === 0 && (await this.isZeroHealth())) {
+                break;
+            }
         } while (await this.isEmptyHealth());
 
         if (this.defensiveTimer.isExpired()) {
