@@ -237,12 +237,12 @@ export class HellfireSupport extends BaseSupport {
     private async trySelfHelling() {
         do {
             await this.selfHealing();
-            await uSleep(50);
-
-            if (this.defensiveTimer.isExpired()) {
-                await this.runDefensive(true);
-            }
         } while (await this.isEmptyHealth());
+
+        if (this.defensiveTimer.isExpired()) {
+            await uSleep(50);
+            await this.runDefensive(true);
+        }
     }
 
     private async runDefensiveFreezeByKeyCode(arrowKeyCode: BttKeyCode) {
