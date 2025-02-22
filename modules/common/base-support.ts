@@ -95,9 +95,19 @@ export abstract class BaseSupport {
     }
 
     // Game 관련
-    async isDie(): Promise<boolean> {
+    async isZeroHealth(): Promise<boolean> {
         return this.bttService.imageSearch({
             imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroHp : SearchImageBase64Type.ZeroHp,
+            threshold: 0.95,
+            searchOn: ImageSearchOn.FocusedWindow,
+            searchRegion: ImageSearchRegion.BottomRight,
+            interval: 0.1,
+        });
+    }
+
+    async isEmptyHealth(): Promise<boolean> {
+        return this.bttService.imageSearch({
+            imageWithBase64: SearchImageBase64Type.EmptyHp,
             threshold: 0.95,
             searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
@@ -179,17 +189,6 @@ export abstract class BaseSupport {
         return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.indexOf(keyword) !== -1);
     }
 
-    protected isAbleToCoolTime(key: string, coolTime: number) {
-        const currentTimestamp = new Date().getTime();
-        const latestTimestamp = this.localStorage.variable<number>(key) ?? 0;
-
-        return currentTimestamp - latestTimestamp >= coolTime;
-    }
-
-    protected isAbleToDefensive() {
-        return this.isAbleToCoolTime('defensive', 185000);
-    }
-
     async runDefensive(isSelf: boolean) {
         await this.bttService.sendKey(BttKeyCode.Number8, 80);
         if (isSelf) {
@@ -202,9 +201,7 @@ export abstract class BaseSupport {
         }
         await this.bttService.sendKey(BttKeyCode['Enter']);
 
-        const varName = 'defensive';
-        this.localStorage.variable<number>(varName, new Date().getTime());
-        await this.bttStorage.scriptVariable(varName, this.localStorage.variable(varName).toString());
+        await this.defensiveTimer.set();
     }
 
     async runDefensiveIfTabTab() {

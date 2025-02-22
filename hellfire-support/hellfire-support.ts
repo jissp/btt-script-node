@@ -80,18 +80,10 @@ export class HellfireSupport extends BaseSupport {
         // 마나가 없다면 회복 하기
         if (await this.isEmptyMana()) {
             await this.tryManaRecovery(99);
-
-            // 공력증강 후 피 회복
-            for (let healCount = 0; healCount < 5; healCount++) {
-                await this.selfHealing();
-                await uSleep(100);
-            }
-
-            // 보무도 걸기
-            if (this.isAbleToDefensive()) {
-                await this.runDefensive(true);
-            }
         }
+
+        // 공력증강 후 피 회복
+        await this.trySelfHelling();
 
         if (!this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
@@ -208,5 +200,38 @@ export class HellfireSupport extends BaseSupport {
         await this.bttService.sendKey(BttKeyCode.Enter);
 
         await this.hellFireTimer.set();
+    }
+
+    private async trySelfHelling() {
+        if(await this.isEmptyHealth()) {
+            let healingCount = 0;
+            do {
+                if (this.defensiveTimer.isExpired()) {
+                    await this.runDefensive(true);
+                }
+
+                // 회복 횟수가 5번이 넘어간다는건 공격받고 있을 수 있다는 이야기
+                if (healingCount > 5) {
+                    for (const arrowKeyCode of [
+                        BttKeyCode.ArrowUp,
+                        BttKeyCode.ArrowDown,
+                        BttKeyCode.ArrowLeft,
+                        BttKeyCode.ArrowRight,
+                    ]) {
+                        await this.tryDefensiveFreeze(arrowKeyCode);
+                    }
+                }
+
+                await this.selfHealing();
+                await uSleep(100);
+            } while (await this.isEmptyHealth());
+        }
+    }
+
+    private async tryDefensiveFreeze(arrowKeyCode: BttKeyCode) {
+        await this.bttService.sendKey(BttKeyCode.Number6, 50);
+        await this.bttService.sendKey(BttKeyCode.Home, 50);
+        await this.bttService.sendKey(arrowKeyCode, 50);
+        await this.bttService.sendKey(BttKeyCode.Enter, 50);
     }
 }

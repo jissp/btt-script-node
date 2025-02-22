@@ -94,7 +94,7 @@ export class HealthSupport extends BaseSupport {
     }
 
     private async runHealthMode() {
-        if (await this.isDie()) {
+        if (await this.isZeroHealth()) {
             const isTargetSelecting = await this.isTargetSelecting();
 
             await this.tryResurrection();
@@ -142,7 +142,7 @@ export class HealthSupport extends BaseSupport {
             return;
         }
 
-        if (await this.isDie()) {
+        if (await this.isZeroHealth()) {
             await this.tryResurrection(100);
 
             await uSleep(100);
@@ -172,7 +172,7 @@ export class HealthSupport extends BaseSupport {
         do {
             await this.terminateIfNotRunning();
 
-            if ((await this.isDie()) || ++tryCount > limitCount) {
+            if ((await this.isZeroHealth()) || ++tryCount > limitCount) {
                 return false;
             }
 
