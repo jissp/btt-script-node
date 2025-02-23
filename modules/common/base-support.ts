@@ -24,7 +24,7 @@ export abstract class BaseSupport {
 
     protected constructor() {
         this.executePath = path.resolve('.');
-        this.storagePath = `${this.executePath}/storages`;
+        this.storagePath = `/tmp`;
         this.localStorage = container.resolve(LocalStorage);
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
