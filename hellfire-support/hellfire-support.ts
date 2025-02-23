@@ -3,6 +3,7 @@ import { BaseSupport, Latency, ManaRecoveryItems, TerminateException } from '../
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
+import { ocr } from '../modules/common/externals';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -18,7 +19,7 @@ export class HellfireSupport extends BaseSupport {
     private loopCheckManaTimer: Timer;
     private hellFireTimer: Timer;
     private freezeModeTimer: Timer;
-    private itemBoxCheckerTimer: Timer;
+    private itemCheckerTimer: Timer;
 
     constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
@@ -26,7 +27,7 @@ export class HellfireSupport extends BaseSupport {
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
         this.freezeModeTimer = this.timerFactory.create('freeze-mode', 5000);
-        this.itemBoxCheckerTimer = this.timerFactory.create('item-box-checker-timer', 5000);
+        this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 3000);
     }
 
     protected async handle(): Promise<void> {
@@ -82,12 +83,7 @@ export class HellfireSupport extends BaseSupport {
             try {
                 await this.terminateIfNotRunning();
 
-                // 막걸리 체크
-                if (this.itemBoxCheckerTimer.isExpired()) {
-                    this.localStorage.variable<string[]>('item-rows', await this.getItemBoxFromPath());
-
-                    await this.itemBoxCheckerTimer.set();
-                }
+                this.tryRefreshItemList();
 
                 await uSleep(50);
             } catch (error) {
@@ -263,5 +259,19 @@ export class HellfireSupport extends BaseSupport {
         await this.bttService.sendKey(BttKeyCode.Home, Latency.KeyCode);
         await this.bttService.sendKey(arrowKeyCode, Latency.KeyCode);
         await this.bttService.sendKey(BttKeyCode.Enter);
+    }
+
+    private async tryRefreshItemList() {
+        return this.itemCheckerTimer.acquireLock(async () => {
+            const tempImagePath = `${this.storagePath}/item-box.png`;
+            await this.bttService.captureToPath(this.calcItemRect(), tempImagePath);
+            await uSleep(200);
+
+            const itemText = await ocr(tempImagePath);
+
+            const items = itemText.split('\n');
+
+            this.localStorage.variable('item-rows', items);
+        });
     }
 }

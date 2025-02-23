@@ -3,6 +3,7 @@ import { BttStorage } from '../storage';
 
 @injectable()
 export class Timer {
+    private isLock: boolean = false;
     private expiresIn: number = 0;
     private timestamp: number = 0;
 
@@ -33,5 +34,20 @@ export class Timer {
         }
 
         return Date.now() - this.timestamp >= this.expiresIn;
+    }
+
+    public async acquireLock(callback: () => Promise<void>) {
+        if (this.isExpired() && !this.isLock) {
+            try {
+                this.isLock = true;
+
+                await callback();
+            } catch(error) {
+                throw error;
+            } finally {
+                await this.set();
+                this.isLock = false;
+            }
+        }
     }
 }
