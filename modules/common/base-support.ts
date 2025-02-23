@@ -140,7 +140,7 @@ export abstract class BaseSupport {
     async isEmptyManaFromLog() {
         const message = await this.getLastGameLog();
 
-        return message.indexOf('마력이 부족합니다.') !== -1;
+        return message.includes('마력이 부족합니다.');
     }
 
     async isZeroMana() {
@@ -183,11 +183,11 @@ export abstract class BaseSupport {
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
 
-        await uSleep(100);
+        await uSleep(50); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
 
         const lastGameLog = await this.getLastGameLog();
 
-        return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.indexOf(keyword) !== -1);
+        return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.includes(keyword));
     }
 
     async runDefensive(isSelf: boolean) {

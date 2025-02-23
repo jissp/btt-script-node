@@ -192,7 +192,7 @@ export class HealthSupport extends BaseSupport {
 
         const buffInfo = await this.getBuffInfo();
 
-        const isNeedInvincible = buffInfo.indexOf('금강불체') === -1;
+        const isNeedInvincible = buffInfo.includes('금강불체');
         if (isNeedInvincible) {
             for (let i = 0; i < 2; i++) {
                 await this.bttService.sendKey(BttKeyCode.Number0, 100);

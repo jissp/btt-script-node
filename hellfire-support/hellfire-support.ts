@@ -212,10 +212,12 @@ export class HellfireSupport extends BaseSupport {
         await this.terminateIfNotRunning();
 
         await this.runCurse();
-        await uSleep(50);
 
+        await uSleep(50); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
+
+        // 잘못된 대상을 공격하는 경우가 있어서 헬파이어 사용하기 전에 다시 체크
         const log = await this.getLastGameLog();
-        if (log.indexOf('마법을 쓸 수') !== -1) {
+        if (log.includes('마법을 쓸 수')) {
             return;
         }
 
