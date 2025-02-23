@@ -7,6 +7,7 @@ import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
 import { uSleep } from '../utils';
 import * as path from 'node:path';
+import { ocr } from './externals';
 
 export abstract class BaseSupport {
     protected readonly executePath: string;
@@ -252,16 +253,12 @@ export abstract class BaseSupport {
         }
     }
 
-    async getLastGameLog(isFromPath: boolean = false) {
-        if (isFromPath) {
-            return this.bttService.captureWithExtractTextFromPath({
-                rect: this.calcLastGameLogRect(),
-                waitMilliSeconds: 100,
-                path: `${this.storagePath}/last-game-log.png`,
-            });
-        }
+    async getLastGameLog() {
+        const tempImagePath = `${this.storagePath}/last-game-log.png`;
+        await this.bttService.captureToPath(this.calcLastGameLogRect(), tempImagePath);
+        await uSleep(150);
 
-        return this.bttService.captureWithExtractTextFromClipboard(this.calcLastGameLogRect(), 130);
+        return await ocr(tempImagePath);
     }
 
     public calcBuffInfoRect() {
