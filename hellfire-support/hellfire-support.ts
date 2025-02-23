@@ -89,14 +89,11 @@ export class HellfireSupport extends BaseSupport {
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
-        // if (this.loopCheckManaTimer.isExpired() && (await this.isEmptyMana())) {
-        if (await this.isEmptyMana()) {
+        if (this.loopCheckManaTimer.isExpired() && (await this.isEmptyMana())) {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
             await this.trySelfHelling();
-
-            await this.loopCheckManaTimer.set();
         }
 
         if (!this.hellFireTimer.isExpired()) {
@@ -206,6 +203,7 @@ export class HellfireSupport extends BaseSupport {
             await this.bttService.sendKey(BttKeyCode.Number1, Latency.KeyCode);
         } while (await this.isEmptyMana());
 
+        await this.loopCheckManaTimer.set();
         return true;
     }
 
