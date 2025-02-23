@@ -84,8 +84,7 @@ export class HellfireSupport extends BaseSupport {
 
                 // 막걸리 체크
                 if (this.itemBoxCheckerTimer.isExpired()) {
-                    const itemText = await this.getLastGameLog(true);
-                    this.localStorage.variable<string[]>('item-rows', itemText.split('\n'));
+                    this.localStorage.variable<string[]>('item-rows', await this.getItemBoxFromPath());
 
                     await this.itemBoxCheckerTimer.set();
                 }

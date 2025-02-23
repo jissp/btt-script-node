@@ -254,8 +254,6 @@ export abstract class BaseSupport {
 
     async getLastGameLog(isFromPath: boolean = false) {
         if (isFromPath) {
-            console.log(`${this.storagePath}/last-game-log.png`);
-
             return this.bttService.captureWithExtractTextFromPath({
                 rect: this.calcLastGameLogRect(),
                 waitMilliSeconds: 100,
@@ -317,6 +315,15 @@ export abstract class BaseSupport {
         }
 
         return itemText;
+    }
+
+    async getItemBoxFromPath() {
+        const itemText = await this.bttService.captureWithExtractTextFromPath({
+            rect: this.calcItemRect(),
+            path: `${this.storagePath}`,
+        });
+
+        return itemText.split('\n');
     }
 
     extractItemShortCutAndName(itemRowText: string) {
