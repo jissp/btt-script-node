@@ -170,7 +170,7 @@ export class BttService {
             BTTIsPureAction: 1,
             BTTPredefinedActionType: 169,
             BTTPredefinedActionName: '스크린샷 캡처 (구성 가능)',
-            BTTScreenshotOptions: `-R;;${rect.x},${rect.y},${rect.width},${rect.height};;-x;;-r;;-c;;-t;;png;;${path};;`,
+            BTTScreenshotOptions: `-R;;${rect.x},${rect.y},${rect.width},${rect.height};;-x;;-r;;-t;;png;;${path};;`,
             BTTScreenshotDateFormat: 'yyyy-MM-dd HH.mm.ss',
             BTTEnabled2: 1,
         });
