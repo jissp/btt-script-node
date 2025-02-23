@@ -10,7 +10,7 @@ import * as path from 'node:path';
 
 export abstract class BaseSupport {
     protected readonly executePath: string;
-    protected readonly tempPath: string;
+    protected readonly storagePath: string;
     protected readonly bttService: BttService;
     protected readonly localStorage: LocalStorage;
     protected readonly bttStorage: BttStorage;
@@ -24,7 +24,7 @@ export abstract class BaseSupport {
 
     protected constructor() {
         this.executePath = path.resolve('.');
-        this.tempPath = `${this.executePath}/temp`;
+        this.storagePath = `${this.executePath}/storages`;
         this.localStorage = container.resolve(LocalStorage);
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
@@ -254,10 +254,12 @@ export abstract class BaseSupport {
 
     async getLastGameLog(isFromPath: boolean = false) {
         if (isFromPath) {
+            console.log(`${this.storagePath}/last-game-log.png`);
+
             return this.bttService.captureWithExtractTextFromPath({
                 rect: this.calcLastGameLogRect(),
                 waitMilliSeconds: 100,
-                path: `${this.tempPath}/last-game-log.png`,
+                path: `${this.storagePath}/last-game-log.png`,
             });
         }
 

@@ -21,7 +21,7 @@ async function main() {
     console.log(`beforeLastGameLog: ${Date.now()}`);
 
     while (true) {
-        const lastGameLog = await scriptor.getLastGameLog();
+        const lastGameLog = await scriptor.getLastGameLog(true);
         console.log(lastGameLog);
 
         await uSleep(3000);
