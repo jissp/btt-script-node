@@ -20,7 +20,6 @@ export abstract class BaseSupport {
     protected defensiveTimer: Timer;
 
     protected constructor() {
-        container.registerInstance(BttClient, new BttClient('jissp'));
         this.localStorage = container.resolve(LocalStorage);
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
@@ -249,7 +248,7 @@ export abstract class BaseSupport {
     }
 
     async getLastGameLog() {
-        return this.bttService.captureWithExtractText(this.calcLastGameLogRect());
+        return this.bttService.captureWithExtractTextFromClipboard(this.calcLastGameLogRect(), 130);
     }
 
     calcBuffInfoRect() {
@@ -265,7 +264,7 @@ export abstract class BaseSupport {
     }
 
     async getBuffInfo() {
-        return this.bttService.captureWithExtractText(this.calcBuffInfoRect());
+        return this.bttService.captureWithExtractTextFromClipboard(this.calcBuffInfoRect());
     }
 
     private calcItemRect(): WindowRect {
@@ -296,7 +295,7 @@ export abstract class BaseSupport {
     async getItemBoxInfo(isSplit: true): Promise<string[]>;
     async getItemBoxInfo(isSplit: false): Promise<string>;
     async getItemBoxInfo(isSplit: boolean) {
-        const itemText = await this.bttService.captureWithExtractText(this.calcItemRect());
+        const itemText = await this.bttService.captureWithExtractTextFromClipboard(this.calcItemRect());
 
         if (isSplit) {
             return itemText.split('\n');
@@ -350,7 +349,7 @@ export abstract class BaseSupport {
     }
 
     async getCharacterCoord() {
-        return this.bttService.captureWithExtractText(this.calcCharacterCoordRect());
+        return this.bttService.captureWithExtractTextFromClipboard(this.calcCharacterCoordRect());
     }
 
     extractCharacterXY(characterInfo: string) {
@@ -371,7 +370,7 @@ export abstract class BaseSupport {
     }
 
     async getLastChatMessage() {
-        return this.bttService.captureWithExtractText(this.calcLastChatMessage());
+        return this.bttService.captureWithExtractTextFromClipboard(this.calcLastChatMessage());
     }
 
     public async castSpellOnTarget(

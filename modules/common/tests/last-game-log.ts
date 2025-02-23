@@ -20,12 +20,12 @@ async function main() {
      **************************************************** */
     console.log(`beforeLastGameLog: ${Date.now()}`);
 
-    // while (true) {
+    while (true) {
         const lastGameLog = await scriptor.getLastGameLog();
         console.log(lastGameLog);
 
-        // await uSleep(1000);
-    // }
+        await uSleep(3000);
+    }
 
 
     console.log('Health Support is done');

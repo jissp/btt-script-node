@@ -7,11 +7,10 @@ import { BttStorage } from '../storage';
 
 @injectable()
 export class BttService {
-    private client: BttClient;
-
-    constructor(@inject(BttStorage) private readonly bttStorage: BttStorage) {
-        this.client = new BttClient('jissp');
-    }
+    constructor(
+        @inject(BttStorage) private readonly bttStorage: BttStorage,
+        @inject(BttClient) private readonly client: BttClient,
+    ) {}
 
     public async getActiveWindowRect(): Promise<WindowRect> {
         const x = await this.bttStorage.numberVariable('focused_window_x');
@@ -165,6 +164,18 @@ export class BttService {
         });
     }
 
+    async captureToPath(rect: WindowRect, path: string) {
+        return this.client.triggerAction({
+            BTTActionCategory: 0,
+            BTTIsPureAction: 1,
+            BTTPredefinedActionType: 169,
+            BTTPredefinedActionName: '스크린샷 캡처 (구성 가능)',
+            BTTScreenshotOptions: `-R;;${rect.x},${rect.y},${rect.width},${rect.height};;-x;;-r;;-c;;-t;;png;;${path};;`,
+            BTTScreenshotDateFormat: 'yyyy-MM-dd HH.mm.ss',
+            BTTEnabled2: 1,
+        });
+    }
+
     async waitForClipboardChange(waitMilliSeconds: number = 3000) {
         return this.client.triggerAction({
             BTTActionCategory: 0,
@@ -179,29 +190,69 @@ export class BttService {
     }
 
     async extractTextFromClipboard(): Promise<string> {
-        const actionData = {
-            BTTOCRSourceType: 0,
-            BTTOCRCopyToClipboard: 0,
-            BTTOCRAutoDetectLanguage: true,
-            // "BTTOCRLanguages": "ko-KR",
-            // "BTTOCRCustomWords": "customwords",
-            BTTOCRJoinFoundStringsWithCharacter: '\\n',
-            BTTOCRJoinBasedOnScreenCoordinates: false,
-        };
-
         return this.client.triggerAction<string>({
             BTTIsPureAction: 1,
             BTTPredefinedActionType: 498,
-            BTTAdditionalActionData: JSON.stringify(actionData),
+            BTTAdditionalActionData: JSON.stringify({
+                BTTOCRSourceType: 0,
+                BTTOCRCopyToClipboard: 0,
+                BTTOCRAutoDetectLanguage: true,
+                // "BTTOCRLanguages": "ko-KR",
+                // "BTTOCRCustomWords": "customwords",
+                BTTOCRJoinFoundStringsWithCharacter: '\\n',
+                BTTOCRJoinBasedOnScreenCoordinates: false,
+            }),
             BTTEnabled2: 1,
         });
     }
 
-    async captureWithExtractText(rect: WindowRect): Promise<string> {
+    async extractTextFromPath(path: string): Promise<string> {
+        return this.client.triggerAction<string>({
+            BTTActionCategory: 0,
+            BTTIsPureAction: 1,
+            BTTPredefinedActionType: 498,
+            BTTAdditionalActionData: JSON.stringify({
+                BTTOCRJoinBasedOnScreenCoordinates: 0,
+                BTTOCRFileAtPath: path,
+                BTTOCRSourceType: 1,
+                BTTOCRAutoDetectLanguage: true,
+                BTTOCRJoinFoundStringsWithCharacter: '\\n',
+            }),
+            BTTEnabled2: 1,
+        });
+    }
+
+    /**
+     * 클립보드에서 텍스트를 추출합니다. 실시간이 필요한 경우 넉넉한 지연 시간을 주어야 합니다.
+     * 그렇지 않으면 이전 데이터를 기반으로 추출되는 경우가 종종 발생합니다.
+     * @param rect
+     * @param waitMilliSeconds
+     */
+    async captureWithExtractTextFromClipboard(rect: WindowRect, waitMilliSeconds: number = 100): Promise<string> {
         await this.captureToClipboard(rect);
-        await uSleep(50);
         await this.waitForClipboardChange(3);
-        await uSleep(80);
+        await uSleep(waitMilliSeconds);
+        return this.extractTextFromClipboard();
+    }
+
+    /**
+     * 파일에서 텍스트를 추출합니다. 실시간이 필요한 경우 넉넉한 지연 시간을 주어야 합니다.
+     * 그렇지 않으면 이전 데이터를 기반으로 추출되는 경우가 종종 발생합니다.
+     * @param rect
+     * @param path
+     * @param waitMilliSeconds
+     */
+    async captureWithExtractTextFromPath({
+        rect,
+        path,
+        waitMilliSeconds = 100,
+    }: {
+        rect: WindowRect;
+        path: string;
+        waitMilliSeconds?: number;
+    }): Promise<string> {
+        await this.captureToPath(rect, path);
+        await uSleep(waitMilliSeconds);
         return this.extractTextFromClipboard();
     }
 }

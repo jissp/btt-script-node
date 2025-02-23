@@ -7,7 +7,7 @@ import { ScriptType } from './btt.interface';
 export class BttClient {
     private axios: Axios;
 
-    constructor(private readonly secret: string) {
+    constructor() {
         this.axios = axios.create({
             baseURL: 'http://127.0.0.1:53257',
         });
@@ -39,8 +39,21 @@ export class BttClient {
         });
     }
 
+    public async triggerNamed<T = any>(triggerName: string): Promise<T> {
+        return this.call<T>(ScriptType.ExecuteAssignedActionsForTrigger, {
+            trigger_name: triggerName,
+        });
+    }
+
     public async triggerAction<T = any>(json: Record<string, any>): Promise<T> {
         return this.call<T>(ScriptType.TriggerAction, {
+            json: JSON.stringify(json),
+        });
+    }
+
+    public async updateTrigger<T = any>(uuid: string, json: Record<string, any>): Promise<T> {
+        return this.call<T>(ScriptType.UpdateTrigger, {
+            uuid,
             json: JSON.stringify(json),
         });
     }
