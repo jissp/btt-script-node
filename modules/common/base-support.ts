@@ -318,6 +318,7 @@ export abstract class BaseSupport {
     }
 
     async getItemBoxFromPath() {
+        console.log(`${this.storagePath}/item-box.png`);
         const itemText = await this.bttService.captureWithExtractTextFromPath({
             rect: this.calcItemRect(),
             path: `${this.storagePath}/item-box.png`,
