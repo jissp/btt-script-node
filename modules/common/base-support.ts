@@ -228,7 +228,7 @@ export abstract class BaseSupport {
         await this.bttService.sendKey(BttKeyCode['a']);
     }
 
-    calcLastGameLogRect(): WindowRect {
+    public calcLastGameLogRect(): WindowRect {
         if (this.isMinimumMode) {
             const hpX = this.activeWindowRect.width - 243;
             const hpY = this.activeWindowRect.height - 213;
@@ -264,7 +264,7 @@ export abstract class BaseSupport {
         return this.bttService.captureWithExtractTextFromClipboard(this.calcLastGameLogRect(), 130);
     }
 
-    calcBuffInfoRect() {
+    public calcBuffInfoRect() {
         const hpX = this.activeWindowRect.width - 580;
         const hpY = this.activeWindowRect.height - 555;
 
@@ -280,7 +280,7 @@ export abstract class BaseSupport {
         return this.bttService.captureWithExtractTextFromClipboard(this.calcBuffInfoRect());
     }
 
-    private calcItemRect(): WindowRect {
+    public calcItemRect(): WindowRect {
         if (this.isMinimumMode) {
             // 미구현
             const hpX = this.activeWindowRect.width - 225;
@@ -318,7 +318,6 @@ export abstract class BaseSupport {
     }
 
     async getItemBoxFromPath() {
-        console.log(`${this.storagePath}/item-box.png`);
         const itemText = await this.bttService.captureWithExtractTextFromPath({
             rect: this.calcItemRect(),
             path: `${this.storagePath}/item-box.png`,
@@ -360,7 +359,7 @@ export abstract class BaseSupport {
         await this.bttService.sendKey(BttKeyCode.Enter);
     }
 
-    calcCharacterCoordRect() {
+    public calcCharacterCoordRect() {
         const hpX = this.activeWindowRect.width - 502;
         const hpY = this.activeWindowRect.height - 56;
 
@@ -384,7 +383,7 @@ export abstract class BaseSupport {
             .map(coord => Number(coord.replace(' ', '')));
     }
 
-    calcLastChatMessage(): WindowRect {
+    public calcLastChatMessage(): WindowRect {
         return {
             x: this.activeWindowRect.x + 239,
             y: this.activeWindowRect.y + 908,
