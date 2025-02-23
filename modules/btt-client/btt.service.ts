@@ -183,7 +183,7 @@ export class BttService {
             BTTPredefinedActionType: 499,
             BTTPredefinedActionName: 'Pause Until Clipboard Changes  or  Wait For Change Of Clipboard Contents',
             BTTAdditionalActionData: JSON.stringify({
-                BTTActionWaitForClipboardTimeout: 1,
+                BTTActionWaitForClipboardTimeout: waitMilliSeconds / 1000,
             }),
             BTTEnabled2: 0,
         });
@@ -230,7 +230,7 @@ export class BttService {
      */
     async captureWithExtractTextFromClipboard(rect: WindowRect, waitMilliSeconds: number = 100): Promise<string> {
         await this.captureToClipboard(rect);
-        await this.waitForClipboardChange(3);
+        await this.waitForClipboardChange(1000);
         await uSleep(waitMilliSeconds);
         return this.extractTextFromClipboard();
     }
