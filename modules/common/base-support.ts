@@ -1,13 +1,16 @@
 import { container } from 'tsyringe';
 import { Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { LocalStorage } from '../local-storage';
-import { BttClient, BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
+import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { TerminateException } from './terminate.exception';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
 import { uSleep } from '../utils';
+import * as path from 'node:path';
 
 export abstract class BaseSupport {
+    protected readonly executePath: string;
+    protected readonly tempPath: string;
     protected readonly bttService: BttService;
     protected readonly localStorage: LocalStorage;
     protected readonly bttStorage: BttStorage;
@@ -20,6 +23,8 @@ export abstract class BaseSupport {
     protected defensiveTimer: Timer;
 
     protected constructor() {
+        this.executePath = path.resolve('.');
+        this.tempPath = `${this.executePath}/temp`;
         this.localStorage = container.resolve(LocalStorage);
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
@@ -247,7 +252,15 @@ export abstract class BaseSupport {
         }
     }
 
-    async getLastGameLog() {
+    async getLastGameLog(isFromPath: boolean = false) {
+        if (isFromPath) {
+            return this.bttService.captureWithExtractTextFromPath({
+                rect: this.calcLastGameLogRect(),
+                waitMilliSeconds: 100,
+                path: `${this.tempPath}/last-game-log.png`,
+            });
+        }
+
         return this.bttService.captureWithExtractTextFromClipboard(this.calcLastGameLogRect(), 130);
     }
 

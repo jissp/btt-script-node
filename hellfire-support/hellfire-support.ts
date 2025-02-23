@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseSupport, Latency, ManaRecoveryItems } from '../modules/common';
+import { BaseSupport, Latency, ManaRecoveryItems, TerminateException } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
@@ -18,6 +18,7 @@ export class HellfireSupport extends BaseSupport {
     private loopCheckManaTimer: Timer;
     private hellFireTimer: Timer;
     private freezeModeTimer: Timer;
+    private itemBoxCheckerTimer: Timer;
 
     constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
@@ -25,6 +26,7 @@ export class HellfireSupport extends BaseSupport {
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
         this.freezeModeTimer = this.timerFactory.create('freeze-mode', 5000);
+        this.itemBoxCheckerTimer = this.timerFactory.create('item-box-checker-timer', 5000);
     }
 
     protected async handle(): Promise<void> {
@@ -72,20 +74,30 @@ export class HellfireSupport extends BaseSupport {
         }
 
         // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
-        // this.backgroundLoop();
+        this.backgroundLoop();
     }
 
-    // private async backgroundLoop() {
-    //     do {
-    //         await this.terminateIfNotRunning();
-    //
-    //         // 막걸리 체크
-    //         const itemText = await this.getItemBoxInfo();
-    //         this.localStorage.variable('item-rows', itemText.split('\n'));
-    //
-    //         await uSleep(3000);
-    //     } while (await this.isRunning());
-    // }
+    private async backgroundLoop() {
+        do {
+            try {
+                await this.terminateIfNotRunning();
+
+                // 막걸리 체크
+                if (this.itemBoxCheckerTimer.isExpired()) {
+                    const itemText = await this.getLastGameLog(true);
+                    this.localStorage.variable<string[]>('item-rows', itemText.split('\n'));
+
+                    await this.itemBoxCheckerTimer.set();
+                }
+
+                await uSleep(50);
+            } catch (error) {
+                if (error instanceof TerminateException) {
+                    throw error;
+                }
+            }
+        } while (await this.isRunning());
+    }
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
@@ -179,8 +191,7 @@ export class HellfireSupport extends BaseSupport {
             }
 
             if (await this.isZeroMana()) {
-                const itemRows = await this.getItemBoxInfo(true);
-                this.localStorage.variable<string[]>('item-rows', itemRows);
+                const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
 
                 const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
 

@@ -253,6 +253,6 @@ export class BttService {
     }): Promise<string> {
         await this.captureToPath(rect, path);
         await uSleep(waitMilliSeconds);
-        return this.extractTextFromClipboard();
+        return this.extractTextFromPath(path);
     }
 }
