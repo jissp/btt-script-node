@@ -16,5 +16,5 @@ async function main() {
 
 // 프로그램 시작
 main().catch(error => {
-    console.error('An error occurred during the migration process:', error);
+    console.error('An error has been detected, so the process will be terminated.', error);
 });

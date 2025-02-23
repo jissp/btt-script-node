@@ -1,3 +1,4 @@
+export * from './externals';
+export * from './exceptions';
 export * from './common.interface';
-export * from './terminate.exception';
-export * from './base-support';
+export * from './base-script';

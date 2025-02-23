@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { uSleep } from '../utils';
-import { WindowRect } from '../common/common.interface';
+import { WindowRect } from '../common';
 import { BttClient } from './btt.client';
 import { BttKeyCode, ImageSearchOn, ImageSearchRegion } from './btt.interface';
 import { BttStorage } from '../storage';

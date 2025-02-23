@@ -1,15 +1,15 @@
+import * as path from 'node:path';
 import { container } from 'tsyringe';
+import { uSleep } from '../utils';
 import { Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
+import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
 import { LocalStorage } from '../local-storage';
+import { ocr } from './externals';
 import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
-import { TerminateException } from './terminate.exception';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
-import { uSleep } from '../utils';
-import * as path from 'node:path';
-import { ocr } from './externals';
 
-export abstract class BaseSupport {
+export abstract class BaseScript {
     protected readonly executePath: string;
     protected readonly storagePath: string;
     protected readonly bttService: BttService;
@@ -50,20 +50,50 @@ export abstract class BaseSupport {
     protected async initialized() {}
 
     public async run(): Promise<void> {
-        do {
-            try {
-                await this.handle();
-            } catch (error) {
-                if (error instanceof TerminateException) {
-                    throw error;
-                }
+        await Promise.all([this.runLoop(this.callbackForMain), this.runLoop(this.callbackForBackground)]);
+    }
 
-                await this.bttStorage.scriptVariable('last-error', error as string);
+    private async runLoop(callback: () => Promise<void>) {
+        do {
+            await this.terminateIfNotRunning();
+
+            if (await this.isActiveApp()) {
+                await callback.call(this);
             }
+
+            await uSleep(50);
         } while (await this.isRunning());
     }
 
+    private async callbackForMain() {
+        try {
+            await this.handle.call(this);
+        } catch (error) {
+            if (error instanceof TerminateException) {
+                throw error;
+            }
+
+            await this.bttStorage.scriptVariable('last-error', error as string);
+        }
+    }
+
+    private async callbackForBackground(): Promise<void> {
+        try {
+            await this.handleForBackground.call(this);
+        } catch (error) {
+            if (error instanceof NotSupportedBackgroundHandleException || error instanceof TerminateException) {
+                return;
+            }
+
+            await this.bttStorage.scriptVariable('last-background-error', error as string);
+        }
+    }
+
     protected abstract handle(): Promise<void>;
+
+    protected async handleForBackground(): Promise<void> {
+        throw new NotSupportedBackgroundHandleException();
+    }
 
     public get isMinimumMode() {
         if (this.activeWindowRect) {

@@ -1,8 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseSupport, Latency } from '../modules/common';
+import { BaseScript, Latency, ocr } from '../modules/common';
 import { uSleep } from '../modules/utils';
-import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
+import { BttKeyCode } from '../modules/btt-client';
 
 enum SupportMode {
     None = 'none',
@@ -11,31 +11,21 @@ enum SupportMode {
 }
 
 @injectable()
-export class HealthSupport extends BaseSupport {
+export class HealthSupport extends BaseScript {
     private mode: SupportMode = SupportMode.Health;
-    private curseModeStartTimestamp: number = 0;
 
     private whiteTigerTimer: Timer;
+    private buffCheckerTimer: Timer;
     private manaInjectionTimer: Timer;
+    private curseModeOffTimer: Timer;
 
     constructor(@inject('ScriptName') protected readonly scriptName: string) {
         super();
 
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
+        this.buffCheckerTimer = this.timerFactory.create('check-buff', 2000);
         this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
-    }
-
-    protected async handle(): Promise<void> {
-        await this.terminateIfNotRunning();
-
-        const oldMode = this.mode;
-        this.mode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
-
-        const isChanged = oldMode !== this.mode;
-
-        await this.handleMode(this.mode, isChanged);
-
-        await uSleep(50);
+        this.curseModeOffTimer = this.timerFactory.create('curse-mode-off', 5000);
     }
 
     protected async initialized(): Promise<void> {
@@ -51,28 +41,20 @@ export class HealthSupport extends BaseSupport {
         if (currentCharacterMana) {
             this.whiteTigerTimer.setExpiresIn((Math.round(currentCharacterMana / 1000) + 10) * 100);
         }
-
-        // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
-        this.backgroundLoop();
     }
 
-    private async backgroundLoop() {
-        do {
-            await this.terminateIfNotRunning();
+    protected async handle(): Promise<void> {
+        const oldMode = this.mode;
+        this.mode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
 
-            // 버프 체크
-            await this.trySelfBuff();
-
-            await uSleep(1000);
-        } while (await this.isRunning());
-    }
-
-    private async handleMode(mode: SupportMode, isChanged: boolean) {
+        const isChanged = oldMode !== this.mode;
         if (isChanged) {
             await this.bttService.sendKey(BttKeyCode.ESC, Latency.KeyCode);
         }
 
-        switch (mode) {
+        await this.trySelfBuff();
+
+        switch (this.mode) {
             case SupportMode.Health:
                 if (isChanged) {
                     await uSleep(100);
@@ -84,13 +66,18 @@ export class HealthSupport extends BaseSupport {
                 break;
             case SupportMode.Curse:
                 if (isChanged) {
-                    this.curseModeStartTimestamp = new Date().getTime();
+                    await this.curseModeOffTimer.set();
                 }
                 await this.runCurseMode();
                 break;
             default:
                 await uSleep(500);
         }
+    }
+
+    protected async handleForBackground() {
+        // 버프 목록 갱신
+        await this.tryRefreshBuffList();
     }
 
     private async runHealthMode() {
@@ -136,8 +123,7 @@ export class HealthSupport extends BaseSupport {
     }
 
     private async runCurseMode() {
-        const currentTimestamp = new Date().getTime();
-        if (currentTimestamp - this.curseModeStartTimestamp > 5000) {
+        if (this.curseModeOffTimer.isExpired()) {
             await this.switchMode(SupportMode.Health);
             return;
         }
@@ -174,7 +160,7 @@ export class HealthSupport extends BaseSupport {
         do {
             await this.terminateIfNotRunning();
 
-            if ((await this.isZeroHealth()) || ++tryCount > limitCount) {
+            if (++tryCount > limitCount || (await this.isZeroHealth())) {
                 return false;
             }
 
@@ -190,14 +176,28 @@ export class HealthSupport extends BaseSupport {
             return;
         }
 
-        const buffInfo = await this.getBuffInfo();
+        const buffText = this.localStorage.variable<string>('buff-text') ?? '';
 
-        const isNeedInvincible = buffInfo.includes('금강불체');
+        const isNeedInvincible = !buffText.includes('금강불체');
         if (isNeedInvincible) {
             for (let i = 0; i < 2; i++) {
                 await this.bttService.sendKey(BttKeyCode.Number0, 100);
             }
         }
+    }
+
+    private async tryRefreshBuffList() {
+        return this.buffCheckerTimer.acquireLock(async () => {
+            const tempImagePath = `${this.storagePath}/character-buff-box.png`;
+            await this.bttService.captureToPath(this.calcBuffInfoRect(), tempImagePath);
+            await uSleep(200);
+
+            const text = await ocr(tempImagePath);
+            this.localStorage.variable('buff-text', text.trim());
+
+            const buffs = text.trim().split('\n');
+            this.localStorage.variable('buffs', buffs);
+        });
     }
 
     private async runWhiteTigerHealing() {

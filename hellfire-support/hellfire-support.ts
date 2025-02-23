@@ -1,9 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseSupport, Latency, ManaRecoveryItems, TerminateException } from '../modules/common';
+import { BaseScript, Latency, ManaRecoveryItems, ocr } from '../modules/common';
 import { uSleep } from '../modules/utils';
-import { BttKeyCode } from '../modules/btt-client';
 import { Timer } from '../modules/timer';
-import { ocr } from '../modules/common/externals';
+import { BttKeyCode } from '../modules/btt-client';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -13,7 +12,7 @@ enum SupportMode {
 }
 
 @injectable()
-export class HellfireSupport extends BaseSupport {
+export class HellfireSupport extends BaseScript {
     private mode: SupportMode = SupportMode.HellFire;
 
     private loopCheckManaTimer: Timer;
@@ -30,9 +29,21 @@ export class HellfireSupport extends BaseSupport {
         this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 3000);
     }
 
-    protected async handle(): Promise<void> {
-        await this.terminateIfNotRunning();
+    protected async initialized(): Promise<void> {
+        await this.switchMode(SupportMode.HellFire);
 
+        await this.hellFireTimer.init();
+
+        // 마나가 없다면 회복 하기
+        if (await this.isEmptyMana()) {
+            await this.tryManaRecovery(99);
+
+            // 공력증강 후 피 회복
+            await this.trySelfHelling();
+        }
+    }
+
+    protected async handle(): Promise<void> {
         const oldMode = this.mode;
         this.mode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
 
@@ -57,41 +68,10 @@ export class HellfireSupport extends BaseSupport {
             default:
                 await uSleep(500);
         }
-
-        await uSleep(25);
     }
 
-    protected async initialized(): Promise<void> {
-        await this.switchMode(SupportMode.HellFire);
-
-        await this.hellFireTimer.init();
-
-        // 마나가 없다면 회복 하기
-        if (await this.isEmptyMana()) {
-            await this.tryManaRecovery(99);
-
-            // 공력증강 후 피 회복
-            await this.trySelfHelling();
-        }
-
-        // 메인 루프와 별개로 동작하는 백그라운드 루프 실행
-        this.backgroundLoop();
-    }
-
-    private async backgroundLoop() {
-        do {
-            try {
-                await this.terminateIfNotRunning();
-
-                this.tryRefreshItemList();
-
-                await uSleep(50);
-            } catch (error) {
-                if (error instanceof TerminateException) {
-                    throw error;
-                }
-            }
-        } while (await this.isRunning());
+    protected async handleForBackground() {
+        this.tryRefreshItemList();
     }
 
     private async runHellFireMode(isFreeze: boolean) {
