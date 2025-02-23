@@ -201,7 +201,7 @@ export class BttService {
         await this.captureToClipboard(rect);
         await uSleep(50);
         await this.waitForClipboardChange(3);
-        await uSleep(50);
+        await uSleep(80);
         return this.extractTextFromClipboard();
     }
 }

@@ -45,6 +45,12 @@ export class BttClient {
         });
     }
 
+    public async executeAssignedActionsForTrigger<T = any>(uuid: string): Promise<T> {
+        return this.call<T>(ScriptType.ExecuteAssignedActionsForTrigger, {
+            uuid,
+        });
+    }
+
     private async call<T = any>(method: ScriptType, params: IQueryParams): Promise<T> {
         const url = buildUrl({
             queryParams: {
