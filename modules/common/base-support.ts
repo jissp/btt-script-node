@@ -183,7 +183,7 @@ export abstract class BaseSupport {
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
 
-        await uSleep(50); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
+        await uSleep(80); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
 
         const lastGameLog = await this.getLastGameLog();
 
