@@ -320,7 +320,8 @@ export abstract class BaseSupport {
     async getItemBoxFromPath() {
         const itemText = await this.bttService.captureWithExtractTextFromPath({
             rect: this.calcItemRect(),
-            path: `${this.storagePath}`,
+            path: `${this.storagePath}/item-box.png`,
+            waitMilliSeconds: 500,
         });
 
         return itemText.split('\n');
