@@ -39,4 +39,8 @@ export class BttStorage {
 
         return this.bttClient.setNumberVariable(`${this.scriptName}-${name}`, value);
     }
+
+    public async isScriptVariable(name: string) {
+        return await this.scriptNumberVariable(name) === 1;
+    }
 }

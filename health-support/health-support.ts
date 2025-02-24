@@ -30,10 +30,7 @@ export class HealthSupport extends BaseScript {
 
     protected async initialized(): Promise<void> {
         await this.switchMode(SupportMode.Health);
-        this.localStorage.variable<boolean>(
-            'is-invincible',
-            (await this.bttStorage.scriptNumberVariable('is-invincible')) === 1,
-        );
+        this.localStorage.variable<boolean>('is-invincible', await this.bttStorage.isScriptVariable('is-invincible'));
 
         //
         await this.whiteTigerTimer.init();
@@ -116,6 +113,7 @@ export class HealthSupport extends BaseScript {
                 await this.bttService.sendKey(BttKeyCode.Number1, 100);
             } else if (!isModeratelyEmptyMana && this.whiteTigerTimer.isExpired()) {
                 await this.runWhiteTigerHealing();
+                await uSleep(180);
             } else {
                 await this.bttService.sendKey(BttKeyCode.Number2, 180);
             }

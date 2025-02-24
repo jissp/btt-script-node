@@ -3,7 +3,7 @@ import * as path from 'node:path';
 const { execFile } = require('child_process');
 
 export async function ocr(imagePath: string): Promise<string> {
-    const swiftExecutable = path.resolve('./modules/common/externals/bin/ocr');
+    const swiftExecutable = path.resolve('./modules/common/externals/ocr/bin/ocr');
 
     return new Promise((resolve, reject) => {
         execFile(swiftExecutable, [imagePath], (error: Error, stdout: string, stderr: string) => {
