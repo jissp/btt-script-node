@@ -3,7 +3,7 @@ import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
 import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
-import { ManaRecoveryItems } from '../common.interface';
+import { GameRect, ManaRecoveryItems } from '../common.interface';
 import { ocr, ocrByClipboard } from '../externals';
 
 async function main() {
@@ -25,20 +25,10 @@ async function main() {
 
     const activeWindowRect = await bttService.getActiveWindowRect();
     while (true) {
-        const text = await ocrByClipboard({
-            x: 294,
-            y: 100,
-            width: 800,
-            height: 700,
-        });
-        // const text = await ocrByClipboard({
-        //     x: 1135,
-        //     y: 810,
-        //     width: 365,
-        //     height: 186,
-        // });
-
-        console.log(text.trim());
+        await bttService.captureToClipboard(activeWindowRect);
+        await uSleep(50);
+        const text = await ocrByClipboard(GameRect.ItemBox, true);
+        console.log(text);
 
         await uSleep(3000);
     }

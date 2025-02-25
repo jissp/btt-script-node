@@ -28,15 +28,9 @@ async function main() {
         // 1074 640
         // 1437 764
 
-        const before = Date.now();
-
         await bttService.captureToClipboard(activeWindowRect);
         await uSleep(50);
         const text = await ocrByClipboard(GameRect.GameLastLog);
-        const after = Date.now();
-
-        console.log(after - before);
-        console.log(text);
 
         await uSleep(3000);
     }
