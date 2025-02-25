@@ -26,7 +26,7 @@ export class HellfireSupport extends BaseScript {
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
         this.freezeModeTimer = this.timerFactory.create('freeze-mode', 5000);
-        this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 3000);
+        this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 100);
     }
 
     protected async initialized(): Promise<void> {
@@ -71,7 +71,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
-        // this.tryRefreshItemList();
+        this.tryRefreshItemList();
     }
 
     private async runHellFireMode(isFreeze: boolean) {
@@ -166,9 +166,6 @@ export class HellfireSupport extends BaseScript {
             }
 
             if (await this.isZeroMana()) {
-                // 아이템을 변경했으면 아이템 목록을 갱신
-                await this.refreshItemList();
-
                 const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
 
                 const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
@@ -181,6 +178,9 @@ export class HellfireSupport extends BaseScript {
                 if (!(await this.isManaRecoveryItemShortCutToA(manaRecoveryItems))) {
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(manaRecoveryItems[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
+
+                    // 아이템을 변경했으면 아이템 목록을 갱신
+                    await uSleep(300);
                 }
 
                 await this.useManaRecoveryItem();
@@ -246,7 +246,7 @@ export class HellfireSupport extends BaseScript {
 
     private async tryRefreshItemList() {
         return this.itemCheckerTimer.acquireLock(async () => {
-            return this.refreshItemList(50);
+            return this.refreshItemList(10);
         });
     }
 
