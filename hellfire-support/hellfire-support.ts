@@ -183,7 +183,7 @@ export class HellfireSupport extends BaseScript {
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
 
                     // 아이템을 변경했으면 아이템 목록을 갱신
-                    await uSleep(500);
+                    await this.refreshItemList();
                 }
 
                 await this.useManaRecoveryItem();
@@ -249,11 +249,11 @@ export class HellfireSupport extends BaseScript {
 
     private async tryRefreshItemList() {
         return this.itemCheckerTimer.acquireLock(async () => {
-            return this.refreshItemList(10);
+            return this.refreshItemList();
         });
     }
 
-    private async refreshItemList(captureAfterWaitMilliSeconds = 250) {
+    private async refreshItemList() {
         const itemText = await ocrByClipboard(GameRect.ItemBox);
         const items = itemText.split('\n');
 

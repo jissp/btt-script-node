@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, Latency, ocr } from '../modules/common';
+import { BaseScript, GameRect, Latency, ocrByClipboard } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
@@ -15,6 +15,7 @@ export class HealthSupport extends BaseScript {
     private mode: SupportMode = SupportMode.Health;
 
     private whiteTigerTimer: Timer;
+    private refreshWindowTimer: Timer;
     private buffCheckerTimer: Timer;
     private manaInjectionTimer: Timer;
     private curseModeOffTimer: Timer;
@@ -23,6 +24,7 @@ export class HealthSupport extends BaseScript {
         super();
 
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
+        this.refreshWindowTimer = this.timerFactory.create('refresh-window', 200);
         this.buffCheckerTimer = this.timerFactory.create('check-buff', 100);
         this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
         this.curseModeOffTimer = this.timerFactory.create('curse-mode-off', 5000);
@@ -73,6 +75,12 @@ export class HealthSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
+        // 이미지 화면 캡처
+        if (this.refreshWindowTimer.isExpired()) {
+            await this.bttService.captureToClipboard(this.activeWindowRect);
+            await this.refreshWindowTimer.set();
+        }
+
         await this.tryRefreshBuffList();
     }
 
@@ -189,14 +197,11 @@ export class HealthSupport extends BaseScript {
 
     private async tryRefreshBuffList() {
         return this.buffCheckerTimer.acquireLock(async () => {
-            const tempImagePath = `${this.storagePath}/character-buff-box.png`;
-            await this.bttService.captureToPath(this.calcBuffInfoRect(), tempImagePath);
-            await uSleep(200);
+            const buffFullText = await ocrByClipboard(GameRect.BuffBox);
 
-            const text = await ocr(tempImagePath);
-            this.localStorage.variable('buff-text', text.trim());
+            this.localStorage.variable('buff-text', buffFullText.trim());
 
-            const buffs = text.trim().split('\n');
+            const buffs = buffFullText.trim().split('\n');
             this.localStorage.variable('buffs', buffs);
         });
     }

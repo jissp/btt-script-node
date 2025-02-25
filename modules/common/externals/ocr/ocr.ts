@@ -26,8 +26,6 @@ export async function ocr(imagePath: string): Promise<string> {
 export async function ocrByClipboard(rect: WindowRect): Promise<string> {
     const swiftExecutable = path.resolve('./modules/common/externals/ocr/bin/ocr-clipboard-crop');
 
-    console.log([rect.x * 2, rect.y * 2, rect.width * 2, rect.height * 2]);
-
     return new Promise((resolve, reject) => {
         execFile(swiftExecutable, [rect.x * 2, rect.y * 2, rect.width * 2, rect.height * 2], (error: Error, stdout: string, stderr: string) => {
             if (error) {

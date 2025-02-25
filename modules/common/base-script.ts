@@ -1,10 +1,10 @@
 import * as path from 'node:path';
 import { container } from 'tsyringe';
 import { uSleep } from '../utils';
-import { Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
+import { GameRect, Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
 import { LocalStorage } from '../local-storage';
-import { ocr } from './externals';
+import { ocr, ocrByClipboard } from './externals';
 import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
@@ -259,73 +259,10 @@ export abstract class BaseScript {
         await this.bttService.sendKey(BttKeyCode['a']);
     }
 
-    public calcLastGameLogRect(): WindowRect {
-        if (this.isMinimumMode) {
-            const hpX = this.activeWindowRect.width - 243;
-            const hpY = this.activeWindowRect.height - 213;
-
-            return {
-                x: this.activeWindowRect.x + hpX,
-                y: this.activeWindowRect.y + hpY,
-                width: 100,
-                height: 11,
-            };
-        } else {
-            const hpX = this.activeWindowRect.width - 600;
-            const hpY = this.activeWindowRect.height - 250;
-
-            return {
-                x: this.activeWindowRect.x + hpX,
-                y: this.activeWindowRect.y + hpY,
-                width: 250,
-                height: 24,
-            };
-        }
-    }
-
     async getLastGameLog() {
-        const tempImagePath = `${this.storagePath}/last-game-log.png`;
-        await this.bttService.captureToPath(this.calcLastGameLogRect(), tempImagePath);
-        await uSleep(150);
-
-        return await ocr(tempImagePath);
-    }
-
-    public calcBuffInfoRect() {
-        const hpX = this.activeWindowRect.width - 580;
-        const hpY = this.activeWindowRect.height - 555;
-
-        return {
-            x: this.activeWindowRect.x + hpX,
-            y: this.activeWindowRect.y + hpY,
-            width: 230,
-            height: 120,
-        };
-    }
-
-    public calcItemRect(): WindowRect {
-        if (this.isMinimumMode) {
-            // 미구현
-            const hpX = this.activeWindowRect.width - 225;
-            const hpY = this.activeWindowRect.height - 452;
-
-            return {
-                x: this.activeWindowRect.x + hpX,
-                y: this.activeWindowRect.y + hpY,
-                width: 100,
-                height: 160,
-            };
-        } else {
-            const hpX = this.activeWindowRect.width - 525;
-            const hpY = 149;
-
-            return {
-                x: this.activeWindowRect.x + hpX,
-                y: this.activeWindowRect.y + hpY,
-                width: 226,
-                height: 393,
-            };
-        }
+        await this.bttService.captureToClipboard(this.activeWindowRect);
+        await uSleep(50);
+        return await ocrByClipboard(GameRect.GameLastLog);
     }
 
     extractItemShortCutAndName(itemRowText: string) {
@@ -358,35 +295,6 @@ export abstract class BaseScript {
         await this.bttService.sendKey(BttKeyCode[','], Latency.KeyCode);
         await this.bttService.sendKey(BttKeyCode[shortCutB], Latency.KeyCode);
         await this.bttService.sendKey(BttKeyCode.Enter);
-    }
-
-    public calcCharacterCoordRect() {
-        const hpX = this.activeWindowRect.width - 502;
-        const hpY = this.activeWindowRect.height - 56;
-
-        return {
-            x: this.activeWindowRect.x + hpX,
-            y: this.activeWindowRect.y + hpY,
-            width: 264,
-            height: 24,
-        };
-    }
-
-    extractCharacterXY(characterInfo: string) {
-        const characterInfoRows = characterInfo.split('\n');
-
-        return characterInfoRows
-            .slice(characterInfoRows.length - 2, characterInfoRows.length)
-            .map(coord => Number(coord.replace(' ', '')));
-    }
-
-    public calcLastChatMessage(): WindowRect {
-        return {
-            x: this.activeWindowRect.x + 239,
-            y: this.activeWindowRect.y + 908,
-            width: 800,
-            height: 27,
-        };
     }
 
     public async castSpellOnTarget(
