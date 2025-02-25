@@ -261,7 +261,7 @@ export abstract class BaseScript {
 
     async getLastGameLog() {
         await this.bttService.captureToClipboard(this.activeWindowRect);
-        await uSleep(100);
+        await uSleep(150);
         return await ocrByClipboard(GameRect.GameLastLog);
     }
 
