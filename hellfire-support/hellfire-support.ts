@@ -71,7 +71,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
-        this.tryRefreshItemList();
+        // this.tryRefreshItemList();
     }
 
     private async runHellFireMode(isFreeze: boolean) {
@@ -246,17 +246,16 @@ export class HellfireSupport extends BaseScript {
 
     private async tryRefreshItemList() {
         return this.itemCheckerTimer.acquireLock(async () => {
-            return this.refreshItemList();
+            return this.refreshItemList(50);
         });
     }
 
-    private async refreshItemList() {
+    private async refreshItemList(captureAfterWaitMilliSeconds = 250) {
         const tempImagePath = `${this.storagePath}/item-box.png`;
         await this.bttService.captureToPath(this.calcItemRect(), tempImagePath);
-        await uSleep(200);
+        await uSleep(captureAfterWaitMilliSeconds);
 
         const itemText = await ocr(tempImagePath);
-
         const items = itemText.split('\n');
 
         this.localStorage.variable('item-rows', items);
