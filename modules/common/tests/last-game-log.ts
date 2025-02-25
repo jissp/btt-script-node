@@ -3,7 +3,7 @@ import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
 import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
-import { ManaRecoveryItems } from '../common.interface';
+import { GameRect, ManaRecoveryItems } from '../common.interface';
 import { ocrByClipboard } from '../externals';
 
 async function main() {
@@ -23,24 +23,16 @@ async function main() {
 
     const bttService = container.resolve(BttService);
 
+    const activeWindowRect = await bttService.getActiveWindowRect();
     while (true) {
         // 1074 640
         // 1437 764
 
         const before = Date.now();
 
-        const text = await ocrByClipboard({
-            x: 1135,
-            y: 674,
-            width: 358,
-            height: 127,
-        });
-        // const text = await ocrByClipboard({
-        //     x: 0,
-        //     y: 0,
-        //     width: 1437,
-        //     height: 764,
-        // });
+        await bttService.captureToClipboard(activeWindowRect);
+        await uSleep(50);
+        const text = await ocrByClipboard(GameRect.GameLastLog);
         const after = Date.now();
 
         console.log(after - before);
