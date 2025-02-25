@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocr, ocrByClipboard } from '../modules/common';
+import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocrByClipboard, screenCapture } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
@@ -72,7 +72,9 @@ export class HellfireSupport extends BaseScript {
 
     protected async handleForBackground() {
         // 이미지 화면 캡처
-        await this.bttService.captureToClipboard(this.activeWindowRect);
+        await screenCapture({
+            rect: this.activeWindowRect,
+        });
 
         this.tryRefreshItemList();
     }

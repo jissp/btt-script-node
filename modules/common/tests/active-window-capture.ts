@@ -4,7 +4,7 @@ import { HealthSupport } from '../../../health-support/health-support';
 import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
 import { ManaRecoveryItems } from '../common.interface';
-import { ocrByClipboard } from '../externals';
+import { ocrByClipboard, screenCapture } from '../externals';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -29,7 +29,9 @@ async function main() {
 
         const before = Date.now();
 
-        await bttService.captureToClipboard(scriptor.activeWindowRect);
+        await screenCapture({
+            rect: await bttService.getActiveWindowRect(),
+        });
         // const text = await ocrByClipboard({
         //     x: 0,
         //     y: 0,

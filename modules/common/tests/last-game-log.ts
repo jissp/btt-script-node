@@ -1,10 +1,11 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
-import { BttKeyCode, BttService } from '../../btt-client';
+import { BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
-import { GameRect, ManaRecoveryItems } from '../common.interface';
+import { GameRect } from '../common.interface';
 import { ocrByClipboard } from '../externals';
+import { screenCapture } from '../externals/screencapture/screencapture';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -28,13 +29,13 @@ async function main() {
         // 1074 640
         // 1437 764
 
-        await bttService.captureToClipboard(activeWindowRect);
-        await uSleep(50);
+        // await bttService.captureToClipboard(activeWindowRect);
+        await screenCapture({ rect: activeWindowRect });
         const text = await ocrByClipboard(GameRect.GameLastLog, true);
 
+        console.log(text);
         await uSleep(3000);
     }
-
 
     console.log('Health Support is done');
 }

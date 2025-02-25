@@ -4,7 +4,7 @@ import { uSleep } from '../utils';
 import { GameRect, Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
 import { LocalStorage } from '../local-storage';
-import { ocr, ocrByClipboard } from './externals';
+import { ocrByClipboard, screenCapture } from './externals';
 import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
@@ -260,8 +260,9 @@ export abstract class BaseScript {
     }
 
     async getLastGameLog() {
-        await this.bttService.captureToClipboard(this.activeWindowRect);
-        await uSleep(150);
+        await screenCapture({
+            rect: this.activeWindowRect,
+        });
         return await ocrByClipboard(GameRect.GameLastLog);
     }
 

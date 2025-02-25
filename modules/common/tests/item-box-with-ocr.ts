@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
-import { BttKeyCode, BttService } from '../../btt-client';
+import { BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
-import { GameRect, ManaRecoveryItems } from '../common.interface';
-import { ocr, ocrByClipboard } from '../externals';
+import { GameRect } from '../common.interface';
+import { ocrByClipboard, screenCapture } from '../externals';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -25,7 +25,9 @@ async function main() {
 
     const activeWindowRect = await bttService.getActiveWindowRect();
     while (true) {
-        await bttService.captureToClipboard(activeWindowRect);
+        await screenCapture({
+            rect: activeWindowRect,
+        });
         await uSleep(50);
         const text = await ocrByClipboard(GameRect.ItemBox, true);
         console.log(text);
