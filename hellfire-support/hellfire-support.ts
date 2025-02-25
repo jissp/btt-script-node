@@ -178,6 +178,9 @@ export class HellfireSupport extends BaseScript {
                 if (!(await this.isManaRecoveryItemShortCutToA(manaRecoveryItems))) {
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(manaRecoveryItems[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
+
+                    // 아이템을 변경했으면 아이템 목록을 갱신
+                    await this.refreshItemList();
                 }
 
                 await this.useManaRecoveryItem();
@@ -243,15 +246,19 @@ export class HellfireSupport extends BaseScript {
 
     private async tryRefreshItemList() {
         return this.itemCheckerTimer.acquireLock(async () => {
-            const tempImagePath = `${this.storagePath}/item-box.png`;
-            await this.bttService.captureToPath(this.calcItemRect(), tempImagePath);
-            await uSleep(200);
-
-            const itemText = await ocr(tempImagePath);
-
-            const items = itemText.split('\n');
-
-            this.localStorage.variable('item-rows', items);
+            return this.refreshItemList();
         });
+    }
+
+    private async refreshItemList() {
+        const tempImagePath = `${this.storagePath}/item-box.png`;
+        await this.bttService.captureToPath(this.calcItemRect(), tempImagePath);
+        await uSleep(200);
+
+        const itemText = await ocr(tempImagePath);
+
+        const items = itemText.split('\n');
+
+        this.localStorage.variable('item-rows', items);
     }
 }

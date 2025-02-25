@@ -303,10 +303,6 @@ export abstract class BaseScript {
         };
     }
 
-    async getBuffInfo() {
-        return this.bttService.captureWithExtractTextFromClipboard(this.calcBuffInfoRect());
-    }
-
     public calcItemRect(): WindowRect {
         if (this.isMinimumMode) {
             // 미구현
@@ -330,18 +326,6 @@ export abstract class BaseScript {
                 height: 393,
             };
         }
-    }
-
-    async getItemBoxInfo(isSplit: true): Promise<string[]>;
-    async getItemBoxInfo(isSplit: false): Promise<string>;
-    async getItemBoxInfo(isSplit: boolean) {
-        const itemText = await this.bttService.captureWithExtractTextFromClipboard(this.calcItemRect());
-
-        if (isSplit) {
-            return itemText.split('\n');
-        }
-
-        return itemText;
     }
 
     async getItemBoxFromPath() {
@@ -398,10 +382,6 @@ export abstract class BaseScript {
         };
     }
 
-    async getCharacterCoord() {
-        return this.bttService.captureWithExtractTextFromClipboard(this.calcCharacterCoordRect());
-    }
-
     extractCharacterXY(characterInfo: string) {
         const characterInfoRows = characterInfo.split('\n');
 
@@ -417,10 +397,6 @@ export abstract class BaseScript {
             width: 800,
             height: 27,
         };
-    }
-
-    async getLastChatMessage() {
-        return this.bttService.captureWithExtractTextFromClipboard(this.calcLastChatMessage());
     }
 
     public async castSpellOnTarget(

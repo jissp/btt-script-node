@@ -23,7 +23,7 @@ export class HealthSupport extends BaseScript {
         super();
 
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
-        this.buffCheckerTimer = this.timerFactory.create('check-buff', 2000);
+        this.buffCheckerTimer = this.timerFactory.create('check-buff', 100);
         this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
         this.curseModeOffTimer = this.timerFactory.create('curse-mode-off', 5000);
     }
@@ -73,7 +73,6 @@ export class HealthSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
-        // 버프 목록 갱신
         await this.tryRefreshBuffList();
     }
 
@@ -111,12 +110,16 @@ export class HealthSupport extends BaseScript {
 
             if (isModeratelyEmptyMana && healLoop === 0) {
                 await this.bttService.sendKey(BttKeyCode.Number1, 100);
-            } else if (!isModeratelyEmptyMana && this.whiteTigerTimer.isExpired()) {
-                await this.runWhiteTigerHealing();
-                await uSleep(180);
-            } else {
-                await this.bttService.sendKey(BttKeyCode.Number2, 180);
+                continue;
             }
+
+            if (!isModeratelyEmptyMana && this.whiteTigerTimer.isExpired()) {
+                await this.runWhiteTigerHealing();
+            } else {
+                await this.bttService.sendKey(BttKeyCode.Number2);
+            }
+
+            await uSleep(185);
         }
     }
 
