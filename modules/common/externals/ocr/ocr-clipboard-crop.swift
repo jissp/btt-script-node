@@ -18,8 +18,8 @@ func recognizeTextFromClipboard(inRect rect: NSRect) {
     }
 
     // 디버깅: 크롭된 이미지를 파일로 저장
-//         let filePath = "/tmp/debugging.png"  // 파일 경로 수정
-//         saveCGImageToFile(cgImage: croppedCGImage, to: filePath)
+//     let filePath = "/tmp/debugging.png"  // 파일 경로 수정
+//     saveCGImageToFile(cgImage: croppedCGImage, to: filePath)
 
     // OCR 처리 요청
     let request = VNRecognizeTextRequest { (request, error) in

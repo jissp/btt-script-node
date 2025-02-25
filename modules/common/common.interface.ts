@@ -19,6 +19,7 @@ export enum GameRectType {
     MapName = 'MapName',
     GameBox = 'GameBox',
     ItemBox = 'ItemBox',
+    BuffBox = 'BuffBox',
     GameLog = 'GameLog',
     Chatting = 'Chatting',
     CharacterStatus = 'CharacterStatus',
@@ -43,6 +44,12 @@ export const GameRect: { [key in GameRectType]: WindowRect } = {
         y: 184,
         width: 230,
         height: 396,
+    },
+    [GameRectType.BuffBox]: {
+        x: 1158,
+        y: 472,
+        width: 230,
+        height: 120,
     },
     [GameRectType.GameLog]: {
         x: 1135,
