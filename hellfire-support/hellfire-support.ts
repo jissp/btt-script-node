@@ -166,6 +166,9 @@ export class HellfireSupport extends BaseScript {
             }
 
             if (await this.isZeroMana()) {
+                // 아이템을 변경했으면 아이템 목록을 갱신
+                await this.refreshItemList();
+
                 const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
 
                 const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
@@ -178,9 +181,6 @@ export class HellfireSupport extends BaseScript {
                 if (!(await this.isManaRecoveryItemShortCutToA(manaRecoveryItems))) {
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(manaRecoveryItems[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
-
-                    // 아이템을 변경했으면 아이템 목록을 갱신
-                    await this.refreshItemList();
                 }
 
                 await this.useManaRecoveryItem();
