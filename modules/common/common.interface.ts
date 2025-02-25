@@ -64,8 +64,8 @@ export const GameRect: { [key in GameRectType]: WindowRect } = {
         height: 127,
     },
     [GameRectType.GameLastLog]: {
-        x: 1135,
-        y: 778,
+        x: 1135- 보정.x,
+        y: 740,
         width: 358,
         height: 24,
     },
