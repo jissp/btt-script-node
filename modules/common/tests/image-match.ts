@@ -4,7 +4,7 @@ import { HealthSupport } from '../../../health-support/health-support';
 import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
 import { ManaRecoveryItems } from '../common.interface';
-import { ocr, ocrByClipboard } from '../externals';
+import { ocr } from '../externals';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -23,25 +23,8 @@ async function main() {
      **************************************************** */
     console.log(`beforeLastGameLog: ${Date.now()}`);
 
-    const activeWindowRect = await bttService.getActiveWindowRect();
-    while (true) {
-        const text = await ocrByClipboard({
-            x: 294,
-            y: 100,
-            width: 800,
-            height: 700,
-        });
-        // const text = await ocrByClipboard({
-        //     x: 1135,
-        //     y: 810,
-        //     width: 365,
-        //     height: 186,
-        // });
+    
 
-        console.log(text.trim());
-
-        await uSleep(3000);
-    }
 
     console.log('Health Support is done');
 }

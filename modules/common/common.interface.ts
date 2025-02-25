@@ -15,6 +15,61 @@ export enum SearchImageBase64Type {
     TargetSelectingFromChatBox = 'iVBORw0KGgoAAAANSUhEUgAAAD4AAAAYCAYAAACiNE5vAAAEDmlDQ1BrQ0dDb2xvclNwYWNlR2VuZXJpY1JHQgAAOI2NVV1oHFUUPpu5syskzoPUpqaSDv41lLRsUtGE2uj+ZbNt3CyTbLRBkMns3Z1pJjPj_KRpKT4UQRDBqOCT4P9bwSchaqvtiy2itFCiBIMo+ND6R6HSFwnruTOzu5O4a73L3PnmnO9+595z7t4LkLgsW5beJQIsGq4t5dPis8fmxMQ6dMF90A190C0rjpUqlSYBG+PCv9rt7yDG3tf2t_f_Z+uuUEcBiN2F2Kw4yiLiZQD+FcWyXYAEQfvICddi+AnEO2ycIOISw7UAVxieD_Cyz5mRMohfRSwoqoz+xNuIB+cj9loEB3Pw2448NaitKSLLRck2q5pOI9O9g_t_tkXda8Tbg0+PszB9FN8DuPaXKnKW4YcQn1Xk3HSIry5ps8UQ_2W5aQnxIwBdu7yFcgrxPsRjVXu8HOh0qao30cArp9SZZxDfg3h1wTzKxu5E_LUxX5wKdX5SnAzmDx4A4OIqLbB69yMesE1pKojLjVdoNsfyiPi45hZmAn3uLWdpOtfQOaVmikEs7ovj8hFWpz7EV6mel0L9Xy23FMYlPYZenAx0yDB1_PX6dledmQjikjkXCxqMJS9WtfFCyH9XtSekEF+2dH+P4tzITduTygGfv58a5VCTH5PtXD7EFZiNyUDBhHnsFTBgE0SQIA9pfFtgo6cKGuhooeilaKH41eDs38Ip+f4At1Rq_sjr6NEwQqb_I_DQqsLvaFUjvAx+eWirddAJZnAj1DFJL0mSg_gcIpPkMBkhoyCSJ8lTZIxk0TpKDjXHliJzZPO50dR5ASNSnzeLvIvod0HG_mdkmOC0z8VKnzcQ2M_Yz2vKldduXjp9bleLu0ZWn7vWc+l0JGcaai10yNrUnXLP_8Jf59ewX+c3Wgz+B34Df+vbVrc16zTMVgp9um9bxEfzPU5kPqUtVWxhs6OiWTVW+gIfywB9uXi7CGcGW_zk98k_kmvJ95IfJn_j3uQ+4c5zn3Kfcd+AyF3gLnJfcl9xH3OfR2rUee80a+6vo7EK5mmXUdyfQlrYLTwoZIU9wsPCZEtP6BWGhAlhL3p2N6sTjRdduwbHsG9kq32sgBepc+xurLPW4T9URpYGJ3ym4+8zA05u44QjST8ZIoVtu3qE7fWmdn5LPdqvgcZz8Ww8BWJ8X3w0PhQ_wnCDGd+LvlHs8dRy6bLLDuKMaZ20tZrqisPJ5ONiCq8yKhYM5cCgKOu66Lsc0aYOtZdo5QCwezI4wm9J_v0X23mlZXOfBjj8Jzv3WrY5D+CsA9D7aMs2gGfjve8ArD6mePZSeCfEYt8CONWDw8FXTxrPqx_r9Vt4biXeANh8vV7_+_16ffMD1N8AuKD_A_8leAvFY9bLAAAAOGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAACoAIABAAAAAEAAAA+oAMABAAAAAEAAAAYAAAAAEhq0mUAAAaZSURBVFgJ7ZhpiI1tGMf_w7EvY5d9yDaMNXwQIiLE2LcUivKBppkSE1lSprFFEYqikOIDspZt7AyZzGQ39jXrjH19_a66T885zjznzPvlTd6rzjzbfV_3tfyv_3XfE_fzl+gvlBJ_oc_m8v+O_22ZD0Rz+PPnz_r27ZvKlClj18ePHysQCKhOnToqVapUtOnB7y9evNDTp09Vr149ValSRXFxccFv_8WNr+Pw3sGDB3X16lUNGjTIHF68eLGqV6+ulJQU1a1bN8RmgnL9+nU1bNhQjRo1svFuwIEDB7Ru3TrNmDFD_fv3_y1o379_18OHD3Xt2jW9fPlS7969s6kVK1ZU7dq11apVK7uWKPF7dTKWwJKIGjVqWJLcukVdA69fv9bNmzf16dOnkDE4Vb9+fe3bt0_79+9X48aN1aRJE+Xk5KhWrVr6+PFjyHgeTp06pSVLlmj06NGaPHmy4uPjg2MePHig8+fP69GjR8JJL1oKCwu1Y8cO7dq1yxz_+vVrEBGgDedbtmypsWPHasCAASpXrpzp_fLli44dO6adO3fq_v37FugWLVpoxIgR6ty5c3DtSDeBCxcuKCMjQ8+fPw_5PnjwYMtqyMsoD8+ePdONGzcscxgfi4CqPXv2aOHChZapMWPGqE2bNipfvrw5X1BQIGzctm2boYlg9urVS2SehCxYsMCCCSpI4uHDh23c0qVL1bRp0yJNCLx580a3bt1S1apVLZouE0TMRbbI2Z4PP3780KtXrww5QDYSIhiOcXyvVq2arQlMz5w5Y_VPAiZMmGBIcRxAYHr37m26d+_erSNHjqhbt24qW7asEhIS7FvHjh2tFPLz8zV79mxlZ2fr9OnT_o5jDNFr1qyZpk+frgoVKvBKpUuXDoGjvfT5Q33n5eUZAV68eFH37t0zIguvyVWrVmnLli3q06ePIY11IDuEMgA1OFuyZEnLOHCm5nlPMOAXFxTqftasWapUqZLZS303b95cJ06csDk+5ipIbmS6cuXKVk9uArWIYMjbt29NWSQIww9A7OzZs5YF4Llx40ZjfnjBGYounqnX1q1bm3N0C4Jw_Phxbd682XS0a9fOSIrxT5480aVLlwwlZLZfv37mJN+wmUAgII7g37lzx9DEOn4SdNxv0IcPH6zGQINrSYwnIJTKoUOHtHz5cjNozpw59gxR4fCkSZOEI07GjRtncKaMHBq6d+9u86njc+fO6eTJk6KNoh9IUxbo4QfJegPp7ICj1q9fbwGC3Hr27OmWjHiNyXEyj8MYgUFOYOOVK1dq69at4n7atGkaOnSoyAxsvHfvXt29e1cbNmxwU8xoYIzToAd0ILS_mTNnGrLIHFyAAF86DEHHYd4zn2fHRwSIoMEBrE3L9HYUUxT2JybHWWTKlCnW3ubPnx9U4QKCYcOHDxeMzIJt27ZVZmamsS5oqVmzZnCO94YOAJsXV2in2AP7I7dv3zbewM60tDRfUnNrxeQ4Eca5hF8sStadwAnp6emWbciRekXev39v1x49elhnIDN0CXo7sGfnh4AKOkFxBUJkrhPIFKh36NBBXbt2da99r2YBxMAmhjpFIXCCVAYOHCgyVpQQECAK1GhLQJuNCAQD4bmNCqxLdoYMGaL27dsHHYeBV69ebXPhCmqZ2g+v4fD1cZysO4HdU1NTLdP0_1gkQAbJHI5u2rTJ5rAwCoieY3Y_ZTgNIy9btswIDicbNGhgCMAhtrHU3+XLly241CFr4CRIWbNmjc2dN2+eRo0aFUSO35reb2yR+_bta2VGMmKRQJcuXbRixQrRL4EkgaBF0FupGYyOJhCfY_G5c+eaEWQFAU0QGEGBddlc0Mq8JUNw2NIyjvHFFYK6du1aderUSYsWLQppyUXpCrDV88LGCzOy7X0uSgnvMRimBuL8CCK1TOlQLugiG1wpjUjitryOK8LHYAvlANN77crKylJubq4FDvSxt48mVuNeJd4JbiGIzU8ZR1QgygGF0xt9nTlklY0PJ64rV65YRhzheddx99u3b7eNjOvv7r27gqJhw4Zp4sSJwU0M3zhX0GYTExOjtjGny5fVcXzkyJFW65ASUExKSrKIe_fxBIUTGcg5evSo7f3ZslI+cAWomjp1qpElRBQu6B4_fnwIU4eP4RnHOVOEJyo5OVkEFK6KtcbjfsEuMu4irMzBg+MfMObI6urYO5SNDGdjrsCcrNPbCQrzIgmlwfhogsMEMlbm9tNXLMf9FP1p337_d8af5sG_tPcfL+kYvxXwk0sAAAAASUVORK5CYII=',
 }
 
+export enum GameRectType {
+    MapName = 'MapName',
+    GameBox = 'GameBox',
+    ItemBox = 'ItemBox',
+    GameLog = 'GameLog',
+    Chatting = 'Chatting',
+    CharacterStatus = 'CharacterStatus',
+    CharacterCoordinate = 'CharacterCoordinate',
+}
+
+export const GameRect: { [key in GameRectType]: WindowRect } = {
+    [GameRectType.MapName]: {
+        x: 595,
+        y: 74,
+        width: 200,
+        height: 30,
+    },
+    [GameRectType.GameBox]: {
+        x: 294,
+        y: 100,
+        width: 800,
+        height: 700,
+    },
+    [GameRectType.ItemBox]: {
+        x: 1210,
+        y: 184,
+        width: 230,
+        height: 396,
+    },
+    [GameRectType.GameLog]: {
+        x: 1135,
+        y: 674,
+        width: 358,
+        height: 127,
+    },
+    [GameRectType.Chatting]: {
+        x: 296,
+        y: 840,
+        width: 800,
+        height: 160,
+    },
+    [GameRectType.CharacterStatus]: {
+        x: 1234,
+        y: 810,
+        width: 266,
+        height: 186,
+    },
+    [GameRectType.CharacterCoordinate]: {
+        x: 1300,
+        y: 971,
+        width: 190,
+        height: 24,
+    },
+};
+
 export enum ManaRecoveryItem {
     '막걸리' = '막걸리',
     '동동주' = '동동주',

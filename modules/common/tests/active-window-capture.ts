@@ -1,9 +1,10 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
-import { BttKeyCode } from '../../btt-client';
+import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
 import { ManaRecoveryItems } from '../common.interface';
+import { ocrByClipboard } from '../externals';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -18,19 +19,30 @@ async function main() {
     /* ****************************************************
      *
      **************************************************** */
-    const itemRows = await scriptor.getItemBoxInfo(true);
-    // if (itemRows.length === 0 || itemRows.filter(row => row.indexOf('막걸리') !== -1).length === 0) {
-    //
-    // }
+    console.log(`beforeLastGameLog: ${Date.now()}`);
 
-    console.log(itemRows);
+    const bttService = container.resolve(BttService);
 
-    if (!(await scriptor.isManaRecoveryItemShortCutToA(itemRows))) {
-        const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
+    while (true) {
+        // 1074 640
+        // 1437 764
 
-        const [, shortCut, itemName] = scriptor.extractItemShortCutAndName(manaRecoveryItems[0]);
-        await scriptor.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
+        const before = Date.now();
+
+        await bttService.captureToClipboard(scriptor.activeWindowRect);
+        // const text = await ocrByClipboard({
+        //     x: 0,
+        //     y: 0,
+        //     width: 1437,
+        //     height: 764,
+        // });
+        const after = Date.now();
+
+        console.log(after - before);
+
+        await uSleep(3000);
     }
+
 
     console.log('Health Support is done');
 }

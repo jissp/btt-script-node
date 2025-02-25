@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, Latency, ManaRecoveryItems, ocr } from '../modules/common';
+import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocr, ocrByClipboard } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
@@ -71,6 +71,9 @@ export class HellfireSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
+        // 이미지 화면 캡처
+        await this.bttService.captureToClipboard(this.activeWindowRect);
+
         this.tryRefreshItemList();
     }
 
@@ -251,11 +254,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async refreshItemList(captureAfterWaitMilliSeconds = 250) {
-        const tempImagePath = `${this.storagePath}/item-box.png`;
-        await this.bttService.captureToPath(this.calcItemRect(), tempImagePath);
-        await uSleep(captureAfterWaitMilliSeconds);
-
-        const itemText = await ocr(tempImagePath);
+        const itemText = await ocrByClipboard(GameRect.ItemBox);
         const items = itemText.split('\n');
 
         this.localStorage.variable('item-rows', items);

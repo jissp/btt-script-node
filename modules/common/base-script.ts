@@ -103,7 +103,7 @@ export abstract class BaseScript {
         return false;
     }
 
-    private get activeWindowRect() {
+    protected get activeWindowRect() {
         return this._activeWindowRect!;
     }
 
@@ -326,16 +326,6 @@ export abstract class BaseScript {
                 height: 393,
             };
         }
-    }
-
-    async getItemBoxFromPath() {
-        const itemText = await this.bttService.captureWithExtractTextFromPath({
-            rect: this.calcItemRect(),
-            path: `${this.storagePath}/item-box.png`,
-            waitMilliSeconds: 500,
-        });
-
-        return itemText.split('\n');
     }
 
     extractItemShortCutAndName(itemRowText: string) {
