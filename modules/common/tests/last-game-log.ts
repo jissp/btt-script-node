@@ -1,9 +1,10 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
-import { BttKeyCode } from '../../btt-client';
+import { BttKeyCode, BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
 import { ManaRecoveryItems } from '../common.interface';
+import { ocrByClipboard } from '../externals';
 
 async function main() {
     console.log('wait 3 seconds');
@@ -20,9 +21,30 @@ async function main() {
      **************************************************** */
     console.log(`beforeLastGameLog: ${Date.now()}`);
 
+    const bttService = container.resolve(BttService);
+
     while (true) {
-        const lastGameLog = await scriptor.getLastGameLog(true);
-        console.log(lastGameLog);
+        // 1074 640
+        // 1437 764
+
+        const before = Date.now();
+
+        const text = await ocrByClipboard({
+            x: 1135,
+            y: 674,
+            width: 358,
+            height: 127,
+        });
+        // const text = await ocrByClipboard({
+        //     x: 0,
+        //     y: 0,
+        //     width: 1437,
+        //     height: 764,
+        // });
+        const after = Date.now();
+
+        console.log(after - before);
+        console.log(text);
 
         await uSleep(3000);
     }
