@@ -30,7 +30,7 @@ async function main() {
 
         await bttService.captureToClipboard(activeWindowRect);
         await uSleep(50);
-        const text = await ocrByClipboard(GameRect.GameLastLog);
+        const text = await ocrByClipboard(GameRect.GameLastLog, true);
 
         await uSleep(3000);
     }
