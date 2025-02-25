@@ -148,31 +148,4 @@ export class BttService {
         await uSleep(25);
         return this.stopKeyboardInputBlock();
     }
-
-    /* *************************
-     * Extract Text
-     ************************* */
-    async captureToPath(rect: WindowRect, path: string) {
-        return this.client.triggerAction({
-            BTTActionCategory: 0,
-            BTTIsPureAction: 1,
-            BTTPredefinedActionType: 169,
-            BTTPredefinedActionName: '스크린샷 캡처 (구성 가능)',
-            BTTScreenshotOptions: `-R;;${rect.x},${rect.y},${rect.width},${rect.height};;-x;;-r;;-t;;png;;${path};;`,
-            BTTScreenshotDateFormat: 'yyyy-MM-dd HH.mm.ss',
-            BTTEnabled2: 1,
-        });
-    }
-
-    async captureToClipboard(rect: WindowRect) {
-        return this.client.triggerAction({
-            BTTActionCategory: 0,
-            BTTIsPureAction: 1,
-            BTTPredefinedActionType: 169,
-            BTTPredefinedActionName: '스크린샷 캡처 (구성 가능)',
-            BTTScreenshotOptions: `-R;;${rect.x},${rect.y},${rect.width},${rect.height};;-x;;-r;;-c;;-t;;png;;;;`,
-            BTTScreenshotDateFormat: 'yyyy-MM-dd HH.mm.ss',
-            BTTEnabled2: 1,
-        });
-    }
 }
