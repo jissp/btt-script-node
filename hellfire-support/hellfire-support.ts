@@ -180,7 +180,7 @@ export class HellfireSupport extends BaseScript {
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
 
                     // 아이템을 변경했으면 아이템 목록을 갱신
-                    await uSleep(300);
+                    await uSleep(500);
                 }
 
                 await this.useManaRecoveryItem();
