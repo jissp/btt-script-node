@@ -31,8 +31,10 @@ export class HellfireSupport extends BaseScript {
 
     protected async initialized(): Promise<void> {
         await this.switchMode(SupportMode.HellFire);
-
         await this.hellFireTimer.init();
+
+        // 아이템창부터 키고 시작하기
+        await this.bttService.sendKey(BttKeyCode.i, Latency.KeyCode);
 
         // 마나가 없다면 회복 하기
         if (await this.isEmptyMana()) {
