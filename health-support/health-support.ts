@@ -76,12 +76,12 @@ export class HealthSupport extends BaseScript {
 
     protected async handleForBackground() {
         // 이미지 화면 캡처
-        if (this.refreshWindowTimer.isExpired()) {
-            await screenCapture({
-                rect: this.activeWindowRect,
-            });
-            await this.refreshWindowTimer.set();
-        }
+        // if (this.refreshWindowTimer.isExpired()) {
+        //     await screenCapture({
+        //         rect: this.activeWindowRect,
+        //     });
+        //     await this.refreshWindowTimer.set();
+        // }
 
         await this.tryRefreshBuffList();
     }
@@ -199,6 +199,9 @@ export class HealthSupport extends BaseScript {
 
     private async tryRefreshBuffList() {
         return this.buffCheckerTimer.acquireLock(async () => {
+            await screenCapture({
+                rect: this.activeWindowRect,
+            });
             const buffFullText = await ocrByClipboard(GameRect.BuffBox);
 
             this.localStorage.variable('buff-text', buffFullText.trim());

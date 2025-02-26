@@ -26,7 +26,7 @@ export class HellfireSupport extends BaseScript {
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
         this.freezeModeTimer = this.timerFactory.create('freeze-mode', 5000);
-        this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 100);
+        this.itemCheckerTimer = this.timerFactory.create('item-box-checker-timer', 500);
     }
 
     protected async initialized(): Promise<void> {
@@ -73,11 +73,6 @@ export class HellfireSupport extends BaseScript {
     }
 
     protected async handleForBackground() {
-        // 이미지 화면 캡처
-        await screenCapture({
-            rect: this.activeWindowRect,
-        });
-
         this.tryRefreshItemList();
     }
 
@@ -182,11 +177,15 @@ export class HellfireSupport extends BaseScript {
                     return false;
                 }
 
+                // 만약 a 위치에 술이 위치하지 않고 있다면 아이템 위치를 바꾼다.
                 if (!(await this.isManaRecoveryItemShortCutToA(manaRecoveryItems))) {
+                    // 아이템을 변경
                     const [, shortCut, itemName] = this.extractItemShortCutAndName(manaRecoveryItems[0]);
                     await this.changeItemAToB(shortCut as keyof typeof BttKeyCode, 'a');
 
-                    // 아이템을 변경했으면 아이템 목록을 갱신
+                    // 화면 갱신을 위해 기다렸다가 갱신
+                    await uSleep(100);
+
                     await this.refreshItemList();
                 }
 
@@ -258,6 +257,10 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async refreshItemList() {
+        await screenCapture({
+            rect: this.activeWindowRect,
+        });
+
         const itemText = await ocrByClipboard(GameRect.ItemBox);
         const items = itemText.split('\n');
 
