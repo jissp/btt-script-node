@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { uSleep } from '../utils';
-import { WindowRect } from '../common';
+import { Latency, WindowRect } from '../common';
 import { BttClient } from './btt.client';
 import { BttKeyCode, ImageSearchOn, ImageSearchRegion } from './btt.interface';
 import { BttStorage } from '../storage';
@@ -37,6 +37,19 @@ export class BttService {
         }
     }
 
+    /**
+     * 연속된 키 입력을 전송한다.
+     * @param keyCodes
+     */
+    public async sendKeys(...keyCodes: BttKeyCode[]) {
+        const keyCodeLength = keyCodes.length;
+        for (const [index, keyCode] of keyCodes.entries()) {
+            const keyInterval = index < keyCodeLength - 1 ? Latency.KeyCode : undefined;
+
+            await this.sendKey(keyCode, keyInterval);
+        }
+    }
+
     public async imageSearch({
         imageWithBase64,
         threshold,
@@ -45,10 +58,10 @@ export class BttService {
         interval,
     }: {
         imageWithBase64: string;
-        threshold: number;
-        searchOn: ImageSearchOn;
+        threshold?: number;
+        searchOn?: ImageSearchOn;
         searchRegion: ImageSearchRegion;
-        interval: number;
+        interval?: number;
     }) {
         const defaultConfig = {
             BTTFindImageSearchOn: 5, // 0: 모든 화면, 5: 집중된 창

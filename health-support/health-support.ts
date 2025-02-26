@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocrByClipboard, screenCapture } from '../modules/common';
+import { BaseScript, GameRect, Latency, ocrByClipboard, screenCapture } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
@@ -34,12 +34,18 @@ export class HealthSupport extends BaseScript {
         await this.switchMode(SupportMode.Health);
         this.localStorage.variable<boolean>('is-invincible', await this.bttStorage.isScriptVariable('is-invincible'));
 
+        await this.initTimer();
         //
-        await this.whiteTigerTimer.init();
-        const currentCharacterMana = await this.bttStorage.scriptNumberVariable('current-mana');
-        if (currentCharacterMana) {
-            this.whiteTigerTimer.setExpiresIn((Math.round(currentCharacterMana / 1000) + 10) * 100);
-        }
+    }
+
+    private async initTimer() {
+        await this.manaInjectionTimer.init();
+        await this.whiteTigerTimer.init(async () => {
+            const currentCharacterMana = (await this.bttStorage.scriptNumberVariable('current-mana')) || 0;
+            if (currentCharacterMana) {
+                this.whiteTigerTimer.setExpiresIn((Math.round(currentCharacterMana / 1000) + 10) * 100);
+            }
+        });
     }
 
     protected async handle(): Promise<void> {
@@ -137,18 +143,7 @@ export class HealthSupport extends BaseScript {
             await uSleep(185);
         }
 
-        if (this.manaInjectionTimer.isExpired()) {
-            const buffMap = this.localStorage.variable('buff-map') as Record<string, number>;
-
-            if(!buffMap['금강불체'] || Number(buffMap['금강불체']) < 5) {
-                return;
-            }
-
-            // 금강불체가 5초 이상 남아있을 경우 마나 주입
-            await this.bttService.sendKey(BttKeyCode.Number5, Latency.KeyCode);
-            await this.bttService.sendKey(BttKeyCode.Enter);
-            await this.manaInjectionTimer.set();
-        }
+        await this.tryManaInject();
     }
 
     private async runCurseMode() {
@@ -225,6 +220,20 @@ export class HealthSupport extends BaseScript {
             this.localStorage.variable('buff-map', Object.fromEntries(buffs));
             this.localStorage.variable('buffs', buffs);
         });
+    }
+
+    private async tryManaInject() {
+        if (this.manaInjectionTimer.isExpired()) {
+            const buffMap = this.localStorage.variable('buff-map') as Record<string, number>;
+
+            if (!buffMap['금강불체'] || Number(buffMap['금강불체']) < 5) {
+                return;
+            }
+
+            // 금강불체가 5초 이상 남아있을 경우 마나 주입
+            await this.bttService.sendKeys(BttKeyCode.Number5, BttKeyCode.Enter);
+            await this.manaInjectionTimer.set();
+        }
     }
 
     private async runWhiteTigerHealing() {

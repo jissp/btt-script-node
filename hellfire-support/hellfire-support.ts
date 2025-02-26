@@ -85,7 +85,7 @@ export class HellfireSupport extends BaseScript {
             await this.trySelfHelling();
         }
 
-        if (!this.hellFireTimer.isExpired()) {
+        if (isFreeze && !this.hellFireTimer.isExpired()) {
             await this.runFreezeMode();
 
             return false;
@@ -230,24 +230,23 @@ export class HellfireSupport extends BaseScript {
         do {
             await this.terminateIfNotRunning();
 
-            await this.selfHealing();
-            await uSleep(70);
-            if (healingCount++ % 5 === 0 && (await this.isZeroHealth())) {
+            const isCheck = healingCount++ % 5 === 0;
+            if (isCheck && (await this.isZeroHealth())) {
                 break;
             }
+
+            await this.selfHealing(isCheck);
+            await uSleep(Latency.KeyCode);
         } while (await this.isEmptyHealth());
 
         if (this.defensiveTimer.isExpired()) {
-            await uSleep(50);
+            await uSleep(Latency.KeyCode);
             await this.runDefensive(true);
         }
     }
 
     private async runDefensiveFreezeByKeyCode(arrowKeyCode: BttKeyCode) {
-        await this.bttService.sendKey(BttKeyCode.Number6, Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode.Home, Latency.KeyCode);
-        await this.bttService.sendKey(arrowKeyCode, Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode.Enter);
+        await this.bttService.sendKeys(BttKeyCode.Number6, BttKeyCode.Home, arrowKeyCode, BttKeyCode.Enter);
     }
 
     private async tryRefreshItemList() {

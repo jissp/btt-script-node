@@ -134,20 +134,14 @@ export abstract class BaseScript {
     async isZeroHealth(): Promise<boolean> {
         return this.bttService.imageSearch({
             imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroHp : SearchImageBase64Type.ZeroHp,
-            threshold: 0.95,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
-            interval: 0.1,
         });
     }
 
     async isEmptyHealth(): Promise<boolean> {
         return this.bttService.imageSearch({
             imageWithBase64: SearchImageBase64Type.EmptyHp,
-            threshold: 0.95,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
-            interval: 0.1,
         });
     }
 
@@ -156,20 +150,14 @@ export abstract class BaseScript {
             imageWithBase64: this.isMinimumMode
                 ? SearchImageBase64Type.ModeratelyEmptyMp
                 : SearchImageBase64Type.ModeratelyEmptyMp,
-            threshold: 0.95,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
-            interval: 0.1,
         });
     }
 
     async isEmptyMana() {
         return this.bttService.imageSearch({
             imageWithBase64: SearchImageBase64Type.EmptyMp,
-            threshold: 0.95,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
-            interval: 0.1,
         });
     }
 
@@ -182,10 +170,7 @@ export abstract class BaseScript {
     async isZeroMana() {
         return this.bttService.imageSearch({
             imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMpMinimum : SearchImageBase64Type.ZeroMp,
-            threshold: 0.95,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomRight,
-            interval: 0.1,
         });
     }
 
@@ -193,9 +178,7 @@ export abstract class BaseScript {
         return this.bttService.imageSearch({
             imageWithBase64: SearchImageBase64Type.TargetSelectingFromChatBox,
             threshold: 0.9,
-            searchOn: ImageSearchOn.FocusedWindow,
             searchRegion: ImageSearchRegion.BottomLeft,
-            interval: 0.1,
         });
     }
 
@@ -206,9 +189,9 @@ export abstract class BaseScript {
         });
     }
 
-    async selfHealing() {
+    async selfHealing(isTargetChangeToSelf = true) {
         await this.castSpellOnTarget(BttKeyCode.Number2, {
-            isNextTarget: true,
+            isNextTarget: isTargetChangeToSelf,
             nextTargetKeyCode: BttKeyCode.Home,
         });
     }
@@ -241,22 +224,20 @@ export abstract class BaseScript {
     }
 
     async runDefensiveIfTabTab() {
-        await this.bttService.sendKey(BttKeyCode.Number8, Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode.Number9);
+        await this.bttService.sendKeys(BttKeyCode.Number8, BttKeyCode.Number9);
 
         await this.defensiveTimer.set();
     }
 
-    async runCurse(isNext?: boolean) {
+    async runCurse(isNextTarget?: boolean) {
         await this.castSpellOnTarget(BttKeyCode.Number4, {
-            isNextTarget: isNext,
+            isNextTarget,
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
     }
 
     async useManaRecoveryItem() {
-        await this.bttService.sendKey(BttKeyCode['u'], Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode['a']);
+        await this.bttService.sendKeys(BttKeyCode.u, BttKeyCode.a);
     }
 
     async getLastGameLog() {
@@ -292,10 +273,7 @@ export abstract class BaseScript {
         }
 
         await this.bttService.sendKey(BttKeyCode.c, 500); // C
-        await this.bttService.sendKey(BttKeyCode[shortCutA], Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode[','], Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode[shortCutB], Latency.KeyCode);
-        await this.bttService.sendKey(BttKeyCode.Enter);
+        await this.bttService.sendKeys(BttKeyCode[shortCutA], BttKeyCode[','], BttKeyCode[shortCutB], BttKeyCode.Enter);
     }
 
     public async castSpellOnTarget(
@@ -307,11 +285,11 @@ export abstract class BaseScript {
     ) {
         await this.terminateIfNotRunning();
 
-        await this.bttService.sendKey(keyCode, Latency.KeyCode);
         if (options?.isNextTarget) {
-            await this.bttService.sendKey(options?.nextTargetKeyCode ?? BttKeyCode.ArrowUp, Latency.KeyCode);
+            return this.bttService.sendKeys(keyCode, options.nextTargetKeyCode ?? BttKeyCode.ArrowUp, BttKeyCode.Enter);
         }
-        await this.bttService.sendKey(BttKeyCode.Enter);
+
+        return this.bttService.sendKeys(keyCode, BttKeyCode.Enter);
     }
 
     public extractBuffNameAndSeconds(str: string): [string, number] | [] {

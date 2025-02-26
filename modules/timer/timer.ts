@@ -15,12 +15,23 @@ export class Timer {
         this.setExpiresIn(expiresIn);
     }
 
-    public async init() {
-        this.timestamp = Number((await this.bttStorage.scriptVariable(this.name)) ?? 0);
+    public async init(callback?: () => Promise<void>) {
+        await this.sync();
+
+        if(callback) {
+            await callback();
+        }
     }
 
     public setExpiresIn(expiresIn: number) {
         this.expiresIn = expiresIn;
+    }
+
+    /**
+     * BTT에 저장된 변수와 동기화
+     */
+    public async sync() {
+        this.timestamp = Number(await this.bttStorage.scriptVariable(this.name)) || 0;
     }
 
     public async set() {
