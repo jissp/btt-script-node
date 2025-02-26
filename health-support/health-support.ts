@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, GameRect, Latency, ocrByClipboard, screenCapture } from '../modules/common';
+import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocrByClipboard, screenCapture } from '../modules/common';
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
@@ -26,7 +26,7 @@ export class HealthSupport extends BaseScript {
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
         this.refreshWindowTimer = this.timerFactory.create('refresh-window', 200);
         this.buffCheckerTimer = this.timerFactory.create('check-buff', 100);
-        this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
+        this.manaInjectionTimer = this.timerFactory.create('mana-injection', 3000);
         this.curseModeOffTimer = this.timerFactory.create('curse-mode-off', 5000);
     }
 
@@ -104,6 +104,11 @@ export class HealthSupport extends BaseScript {
         }
 
         if (await this.isEmptyMana()) {
+            if (await this.isZeroMana()) {
+                await this.useManaRecoveryItem();
+                await uSleep(80);
+            }
+
             if (!(await this.tryManaRecovery())) {
                 return false;
             }
@@ -130,6 +135,19 @@ export class HealthSupport extends BaseScript {
             }
 
             await uSleep(185);
+        }
+
+        if (this.manaInjectionTimer.isExpired()) {
+            const buffMap = this.localStorage.variable('buff-map') as Record<string, number>;
+
+            if(!buffMap['금강불체'] || Number(buffMap['금강불체']) < 5) {
+                return;
+            }
+
+            // 금강불체가 5초 이상 남아있을 경우 마나 주입
+            await this.bttService.sendKey(BttKeyCode.Number5, Latency.KeyCode);
+            await this.bttService.sendKey(BttKeyCode.Enter);
+            await this.manaInjectionTimer.set();
         }
     }
 
@@ -187,10 +205,9 @@ export class HealthSupport extends BaseScript {
             return;
         }
 
-        const buffText = this.localStorage.variable<string>('buff-text') ?? '';
+        const buffMap = this.localStorage.variable('buff-map') as Record<string, number>;
 
-        const isNeedInvincible = !buffText.includes('금강불체');
-        if (isNeedInvincible) {
+        if (!buffMap['금강불체']) {
             for (let i = 0; i < 2; i++) {
                 await this.bttService.sendKey(BttKeyCode.Number0, 100);
             }
@@ -203,10 +220,9 @@ export class HealthSupport extends BaseScript {
                 rect: this.activeWindowRect,
             });
             const buffFullText = await ocrByClipboard(GameRect.BuffBox);
+            const buffs = buffFullText.trim().split('\n').map(this.extractBuffNameAndSeconds);
 
-            this.localStorage.variable('buff-text', buffFullText.trim());
-
-            const buffs = buffFullText.trim().split('\n');
+            this.localStorage.variable('buff-map', Object.fromEntries(buffs));
             this.localStorage.variable('buffs', buffs);
         });
     }

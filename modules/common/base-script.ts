@@ -313,4 +313,13 @@ export abstract class BaseScript {
         }
         await this.bttService.sendKey(BttKeyCode.Enter);
     }
+
+    public extractBuffNameAndSeconds(str: string): [string, number] | [] {
+        const matches = str.match(/([가-힣]+).?([0-9]+)초/);
+        if (!matches) {
+            return [];
+        }
+
+        return [matches[1], Number(matches[2])];
+    }
 }

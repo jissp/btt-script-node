@@ -77,6 +77,7 @@ export enum BttKeyCode {
     Number2 = '19',
     Number3 = '20',
     Number4 = '21',
+    Number5 = '23',
     Number6 = '22',
     Number7 = '26',
     Number8 = '28',
