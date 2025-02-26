@@ -26,7 +26,7 @@ export class HealthSupport extends BaseScript {
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
         this.refreshWindowTimer = this.timerFactory.create('refresh-window', 200);
         this.buffCheckerTimer = this.timerFactory.create('check-buff', 100);
-        this.manaInjectionTimer = this.timerFactory.create('mana-injection', 3000);
+        this.manaInjectionTimer = this.timerFactory.create('mana-injection', 300000);
         this.curseModeOffTimer = this.timerFactory.create('curse-mode-off', 5000);
     }
 
