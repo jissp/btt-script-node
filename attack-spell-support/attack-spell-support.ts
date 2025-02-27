@@ -19,6 +19,10 @@ export class AttackSpellSupport extends BaseScript {
             await this.defensiveTimer.set();
         }
 
+        if(await this.isEmptyMana()) {
+            await this.tryManaRecovery();
+        }
+
         // 몬스터 타겟팅
         await this.bttService.wrapKeyboardInputBlock(async () => {
             await this.bttService.sendKeys(BttKeyCode.Tab, BttKeyCode.ArrowUp, BttKeyCode.Tab);
@@ -42,5 +46,20 @@ export class AttackSpellSupport extends BaseScript {
         const lastGameLog = await this.getLastGameLog();
 
         return ['걸리지 않습니다'].some(keyword => lastGameLog.includes(keyword));
+    }
+
+    private async tryManaRecovery(limitCount = 5) {
+        let tryCount = 0;
+        do {
+            await this.terminateIfNotRunning();
+
+            if (++tryCount > limitCount || (await this.isZeroHealth())) {
+                return false;
+            }
+
+            await this.bttService.sendKey(BttKeyCode.Number1, 100);
+        } while (await this.isEmptyMana());
+
+        return true;
     }
 }
