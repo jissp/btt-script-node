@@ -202,7 +202,7 @@ export abstract class BaseScript {
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
 
-        await uSleep(80); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
+        await uSleep(120); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
 
         const lastGameLog = await this.getLastGameLog();
 
