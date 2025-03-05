@@ -48,7 +48,7 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     getMana() {
-        console.log('getMana', this.maxMana);
+        console.log('getMana', this.mana);
         return this.mana;
     }
 
