@@ -8,12 +8,15 @@ import { ParsedPacket } from './parsers';
 export class PacketConsumer {
     private packetQueueKey = 'packet_data';
     private client: Redis;
+    private isRunning: boolean = false;
 
     constructor(@inject(PacketParser) private readonly parser: PacketParser) {
         this.client = new Redis({
             host: 'localhost',
             port: 16379,
         });
+
+        this.isRunning = true;
     }
 
     public async process(callback: (packet: ParsedPacket) => Promise<void>) {
@@ -22,7 +25,7 @@ export class PacketConsumer {
 
         let lastCustomFragment = '';
         const bucket: string[] = [];
-        while (true) {
+        while (this.isRunning) {
             try {
                 const capturedData = await this.client.lpop(this.packetQueueKey);
                 if (!capturedData) {
@@ -67,6 +70,10 @@ export class PacketConsumer {
                 await uSleep(20);
             }
         }
+    }
+
+    public terminate() {
+        this.isRunning = false;
     }
 
     private async parseAndSendFragments(customFragments: string[], callback: (packet: ParsedPacket) => Promise<void>) {

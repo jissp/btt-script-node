@@ -20,7 +20,7 @@ export abstract class BaseScript {
     protected readonly bttService: BttService;
     protected readonly localStorage: LocalStorage;
     protected readonly bttStorage: BttStorage;
-    protected readonly packetWatcher: PacketConsumer;
+    protected readonly packetConsumer: PacketConsumer;
     protected readonly packetParser: PacketParser;
     protected readonly timerFactory: TimerFactory;
 
@@ -38,7 +38,7 @@ export abstract class BaseScript {
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
         this.timerFactory = container.resolve(TimerFactory);
-        this.packetWatcher = container.resolve(PacketConsumer);
+        this.packetConsumer = container.resolve(PacketConsumer);
         this.packetParser = container.resolve(PacketParser);
 
         this.scriptStartedTimestamp = new Date().getTime();
@@ -54,7 +54,7 @@ export abstract class BaseScript {
 
         await this.defensiveTimer.init();
 
-        this.packetWatcher.process((packet: ParsedPacket) => this.callbackForPacket(packet));
+        this.packetConsumer.process((packet: ParsedPacket) => this.callbackForPacket(packet));
 
         await this.initialized();
     }
@@ -176,6 +176,7 @@ export abstract class BaseScript {
 
     public async terminateIfNotRunning() {
         if (!(await this.isRunning())) {
+            this.packetConsumer.terminate();
             throw new TerminateException('Main loop terminated');
         }
     }
