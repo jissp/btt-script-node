@@ -1,25 +1,29 @@
 import Vision
 import AppKit
 
-func recognizeTextFromClipboard(inRect rect: NSRect) {
+func recognizeTextFromClipboard(inRect rect: NSRect, debuggingMode: String, contrast: Float, removeR: String) {
     // 클립보드에서 이미지 가져오기
     guard let image = getClipboardImage() else {
         return
     }
 
     // NSImage → CGImage 변환
-    guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+    guard let transformedCgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
         return
     }
 
     // 지정된 영역을 잘라냄
-    guard let croppedCGImage = cropImage(cgImage, to: rect) else {
+    guard var cgImage = cropImage(transformedCgImage, to: rect) else {
         return
     }
 
+    cgImage = contrast == 1 ? cgImage : preprocessImage(cgImage, contrast)
+
     // 디버깅: 크롭된 이미지를 파일로 저장
-//     let filePath = "/tmp/debugging.png"  // 파일 경로 수정
-//     saveCGImageToFile(cgImage: croppedCGImage, to: filePath)
+    if debuggingMode == "debug" {
+        let filePath = "/tmp/debugging.png"  // 파일 경로 수정
+        saveCGImageToFile(cgImage: cgImage, to: filePath)
+    }
 
     // OCR 처리 요청
     let request = VNRecognizeTextRequest { (request, error) in
@@ -37,11 +41,21 @@ func recognizeTextFromClipboard(inRect rect: NSRect) {
     request.usesLanguageCorrection = false
 
     // VNImageRequestHandler로 OCR 처리
-    let handler = VNImageRequestHandler(cgImage: croppedCGImage, options: [:])
+    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
     do {
         try handler.perform([request])
     } catch {
     }
+}
+
+// 흑백 대비 높이기
+func preprocessImage(_ cgImage: CGImage, _ contrast: Float) -> CGImage {
+    let ciImage = CIImage(cgImage: cgImage)
+    let filter = CIFilter(name: "CIColorControls")!
+    filter.setValue(ciImage, forKey: kCIInputImageKey)
+    filter.setValue(contrast, forKey: kCIInputContrastKey)  // 대비 증가
+    let context = CIContext()
+    return context.createCGImage(filter.outputImage!, from: filter.outputImage!.extent) ?? cgImage
 }
 
 // 클립보드에서 이미지 가져오기
@@ -87,15 +101,19 @@ func saveCGImageToFile(cgImage: CGImage, to path: String, type: CFString = kUTTy
 }
 
 // 실행 부분 (클립보드에서 가져온 이미지의 특정 영역만 OCR)
-if CommandLine.arguments.count > 4 {
+if CommandLine.arguments.count >= 7 {
     // 인자를 숫자형으로 안전하게 변환
     if let x = Int(CommandLine.arguments[1]),
        let y = Int(CommandLine.arguments[2]),
        let width = Int(CommandLine.arguments[3]),
-       let height = Int(CommandLine.arguments[4]) {
+       let height = Int(CommandLine.arguments[4]),
+       let contrast = Float(CommandLine.arguments[6]) {
+
+        let debuggingMode = CommandLine.arguments[5]
+        let removeR = CommandLine.arguments[7]
 
         let rect = NSRect(x: x, y: y, width: width, height: height)
-        recognizeTextFromClipboard(inRect: rect)
+        recognizeTextFromClipboard(inRect: rect, debuggingMode: debuggingMode, contrast: contrast, removeR: removeR)
     } else {
         print("인자가 숫자 형식이어야 합니다.")
     }

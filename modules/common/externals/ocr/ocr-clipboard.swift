@@ -13,6 +13,8 @@ func recognizeTextFromClipboard() {
         return
     }
 
+    let processedCGImage = preprocessImage(cgImage);
+
     // OCR 처리 요청
     let request = VNRecognizeTextRequest { (request, error) in
         guard let results = request.results as? [VNRecognizedTextObservation] else {
@@ -30,12 +32,22 @@ func recognizeTextFromClipboard() {
     request.usesLanguageCorrection = false
 
     // VNImageRequestHandler로 OCR 처리
-    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+    let handler = VNImageRequestHandler(cgImage: processedCGImage, options: [:])
     do {
         try handler.perform([request])
     } catch {
         print("OCR 요청 처리 중 오류 발생: \(error.localizedDescription)")
     }
+}
+
+// 흑백 대비 높이기
+func preprocessImage(_ cgImage: CGImage) -> CGImage {
+    let ciImage = CIImage(cgImage: cgImage)
+    let filter = CIFilter(name: "CIColorControls")!
+    filter.setValue(ciImage, forKey: kCIInputImageKey)
+    filter.setValue(1.5, forKey: kCIInputContrastKey)  // 대비 증가
+    let context = CIContext()
+    return context.createCGImage(filter.outputImage!, from: filter.outputImage!.extent) ?? cgImage
 }
 
 // 클립보드에서 이미지 가져오기

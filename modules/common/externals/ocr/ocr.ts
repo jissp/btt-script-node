@@ -23,17 +23,33 @@ export async function ocr(imagePath: string): Promise<string> {
     });
 }
 
-export async function ocrByClipboard(rect: WindowRect, isDebugMode: boolean = false): Promise<string> {
-    const swiftExecutable = path.resolve(
-        isDebugMode
-            ? './modules/common/externals/ocr/bin/ocr-clipboard-crop-debug'
-            : './modules/common/externals/ocr/bin/ocr-clipboard-crop',
-    );
+export async function ocrByClipboard(
+    rect: WindowRect,
+    options?: {
+        isDebugMode?: boolean;
+        contrast?: number;
+        removeRgba?: {
+            r?: boolean;
+            g?: boolean;
+            b?: boolean;
+            a?: boolean;
+        };
+    },
+): Promise<string> {
+    const swiftExecutable = path.resolve('./modules/common/externals/ocr/bin/ocr-clipboard-crop');
 
     return new Promise((resolve, reject) => {
         execFile(
             swiftExecutable,
-            [rect.x * 2, rect.y * 2, rect.width * 2, rect.height * 2],
+            [
+                rect.x * 2,
+                rect.y * 2,
+                rect.width * 2,
+                rect.height * 2,
+                options?.isDebugMode ? 'debug' : 'none',
+                options?.contrast ?? 1,
+                options?.removeRgba?.r ? 'Y' : 'N',
+            ],
             (error: Error, stdout: string, stderr: string) => {
                 if (error) {
                     reject(error.message);
