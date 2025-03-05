@@ -5,6 +5,7 @@ import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
 import { Wntnftk } from '../modules/base-character-spell';
 import { CharacterFactory } from '../modules/character';
+import { PacketPattern } from '../modules/packet-consumer';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -21,6 +22,8 @@ export class HellfireSupport extends BaseScript {
     private hellFireTimer: Timer;
     private freezeModeTimer: Timer;
     private itemCheckerTimer: Timer;
+
+    protected excludePacketPatterns = [PacketPattern.체력마력자동회복];
 
     constructor(
         @inject('ScriptName') protected readonly scriptName: string,
@@ -40,10 +43,15 @@ export class HellfireSupport extends BaseScript {
 
         do {
             await this.terminateIfNotRunning();
-            await this.bttService.sendKey(BttKeyCode.s, Latency.KeyCode);
+
+            if (await this.isActiveApp()) {
+                if (!(await this.isMode(SupportMode.None, true))) {
+                    await this.bttService.sendKey(BttKeyCode.s, Latency.KeyCode);
+                }
+            }
 
             await uSleep(100);
-        } while(!this.character.isSetSelfObjectId());
+        } while (!this.character.isSetSelfObjectId());
 
         // 아이템창부터 키고 시작하기
         await this.bttService.sendKey(BttKeyCode.i, Latency.KeyCode);
@@ -164,6 +172,15 @@ export class HellfireSupport extends BaseScript {
         await this.bttStorage.scriptVariable('mode', mode);
     }
 
+    private async isMode(mode: SupportMode, isReferenceByBtt?: boolean) {
+        if (isReferenceByBtt) {
+            const bttMode = (await this.bttStorage.scriptVariable('mode')) as SupportMode;
+            return bttMode === mode;
+        }
+
+        return this.mode === mode;
+    }
+
     private async tryManaRecovery(limitCount = 9) {
         let tryCount = 0;
         do {
@@ -233,12 +250,12 @@ export class HellfireSupport extends BaseScript {
         let healingCount = 0;
         do {
             await this.terminateIfNotRunning();
-            if(this.mode === SupportMode.None) {
+            if (this.mode === SupportMode.None) {
                 break;
             }
 
             const isCheck = healingCount++ % 5 === 0;
-            if (isCheck && (this.isZeroHealth())) {
+            if (isCheck && this.isZeroHealth()) {
                 break;
             }
 

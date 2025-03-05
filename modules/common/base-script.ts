@@ -30,6 +30,8 @@ export abstract class BaseScript {
 
     protected defensiveTimer: Timer;
 
+    protected excludePacketPatterns: PacketPattern[] = [];
+
     protected constructor(character: Character) {
         this.character = character;
         this.executePath = path.resolve('.');
@@ -92,36 +94,41 @@ export abstract class BaseScript {
     private async callbackForPacket(packet: ParsedPacket) {
         await this.terminateIfNotRunning();
 
-        switch (packet.type) {
+        const { type, data } = packet;
+
+        if (this.excludePacketPatterns.includes(packet.type)) {
+            return;
+        }
+
+        switch (type) {
             case PacketPattern.캐릭터상태업데이트:
             case PacketPattern.체력마력자동회복:
                 try {
-                    const packetDataKeys = Object.keys(packet.data);
+                    const packetDataKeys = Object.keys(data);
 
                     if (packetDataKeys.includes('h')) {
-                        this.character.updateHealth(Number(packet.data.h));
+                        this.character.updateHealth(Number(data.h));
                     }
 
                     if (packetDataKeys.includes('m')) {
-                        this.character.updateMana(Number(packet.data.m));
+                        this.character.updateMana(Number(data.m));
                     }
 
                     if (packetDataKeys.includes('mm')) {
-                        this.character.updateMaxMana(Number(packet.data.mm));
+                        this.character.updateMaxMana(Number(data.mm));
                     }
-                } catch (error) {
-                }
+                } catch (error) {}
                 break;
             case PacketPattern.체력바:
-                if(packet.data) {
-                    if(this.character.getSelfObjectId() === packet.data.objectId) {
-                        this.character.setHpBarValue(packet.data.currentHpBar);
+                if (data) {
+                    if (this.character.getSelfObjectId() === data.objectId) {
+                        this.character.setHpBarValue(data.currentHpBar);
                     }
                 }
                 break;
             case PacketPattern.P_ClientSelfLook:
-                if(packet.data) {
-                    this.character.setSelfObjectId(packet.data.selfObjectId);
+                if (data) {
+                    this.character.setSelfObjectId(data.selfObjectId);
                 }
                 break;
         }
