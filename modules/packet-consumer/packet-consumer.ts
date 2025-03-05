@@ -3,6 +3,7 @@ import Redis from 'ioredis';
 import { uSleep } from '../utils';
 import { PacketParser } from './packet-parser';
 import { ParsedPacket } from './parsers';
+import { excludePatterns } from './packet-consumer.interface';
 
 @injectable()
 export class PacketConsumer {
@@ -78,6 +79,10 @@ export class PacketConsumer {
 
     private async parseAndSendFragments(customFragments: string[], callback: (packet: ParsedPacket) => Promise<void>) {
         for (const fragment of customFragments) {
+            if(excludePatterns.some(pattern => fragment.includes(pattern))) {
+                continue;
+            }
+
             const parsedPacket = this.parser.parse(fragment);
             if (!parsedPacket) {
                 continue;

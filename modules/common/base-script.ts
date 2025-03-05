@@ -31,6 +31,7 @@ export abstract class BaseScript {
     protected defensiveTimer: Timer;
 
     protected excludePacketPatterns: PacketPattern[] = [];
+    protected latestDetectedMoveTimestamp: number = 0;
 
     protected constructor(character: Character) {
         this.character = character;
@@ -130,6 +131,16 @@ export abstract class BaseScript {
                 if (data) {
                     this.character.setSelfObjectId(data.selfObjectId);
                 }
+                break;
+            case PacketPattern.ObjectMove:
+                if (data) {
+                    if (this.character.getSelfObjectId() !== data.objectId) {
+                        console.log('오브젝트 움직임 감지');
+                        this.latestDetectedMoveTimestamp = Date.now();
+                    }
+                }
+                break;
+            default:
                 break;
         }
     }

@@ -7,6 +7,7 @@ export enum PacketPattern {
     'chatMessageUID' = '636861744d65737361676555494404',
     'MeramItemSlotUpdated' = '4d6572616d4974656d536c6f74557064617465640b',
     'P_ClientSelfLook' = '505f436c69656e7453656c664c6f6f6b',
+    ObjectMove = '544f5a202a000000',
 }
 
 export enum UnknownPattern {
@@ -58,8 +59,8 @@ export const excludePatterns = [
     UnknownPattern.HeartBeatMap,
     UnknownPattern.UIMeramFieldMapComponent,
     // 추후 몬스터 / 사람 나타났을 대 등 사용해야할 수 있음
-    UnknownPattern.CharacterMoveOrDirection,
-    UnknownPattern.CharacterDirection,
+    // UnknownPattern.CharacterMoveOrDirection,
+    // UnknownPattern.CharacterDirection,
 ];
 
 // export enum PacketType {

@@ -4,6 +4,7 @@ import { CharacterStatusPartialUpdateParser } from './parsers/character-status-p
 import { PacketPattern } from './packet-consumer.interface';
 import { ChangedObjectHpBarParser } from './parsers/changed-object-hp-bar.parser';
 import { ClientSelfLookParser } from './parsers/client-self-look.parser';
+import { ChangedObjectMoveParser } from './parsers/changed-object-move.parser';
 
 @injectable()
 export class PacketParser {
@@ -11,12 +12,14 @@ export class PacketParser {
     private readonly characterStatusUpdateParser: CharacterStatusUpdateParser;
     private readonly characterMonsterAttackParser: ChangedObjectHpBarParser;
     private readonly clientSelfLookParser: ClientSelfLookParser;
+    private readonly changedObjectMoveParser: ChangedObjectMoveParser;
 
     constructor() {
         this.characterStatusPartialUpdateParser = new CharacterStatusPartialUpdateParser();
         this.characterStatusUpdateParser = new CharacterStatusUpdateParser();
         this.characterMonsterAttackParser = new ChangedObjectHpBarParser();
         this.clientSelfLookParser = new ClientSelfLookParser();
+        this.changedObjectMoveParser = new ChangedObjectMoveParser();
     }
 
     public parse(packet: string): ParsedPacket | null {
@@ -29,6 +32,8 @@ export class PacketParser {
                 return this.characterMonsterAttackParser.parse(packet);
             case PacketPattern.P_ClientSelfLook:
                 return this.clientSelfLookParser.parse(packet);
+            case PacketPattern.ObjectMove:
+                return this.changedObjectMoveParser.parse(packet);
             default:
                 return null;
         }

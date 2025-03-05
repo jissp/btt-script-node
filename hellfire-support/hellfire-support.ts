@@ -97,7 +97,7 @@ export class HellfireSupport extends BaseScript {
             await this.trySelfHeal();
         }
 
-        if (isFreeze && !this.hellFireTimer.isExpired()) {
+        if ((isFreeze && !this.hellFireTimer.isExpired()) || this.isLatestDetectObjectMove()) {
             await this.runFreezeMode();
 
             return false;
@@ -290,5 +290,11 @@ export class HellfireSupport extends BaseScript {
         const items = itemText.split('\n');
 
         this.localStorage.variable('item-rows', items);
+    }
+
+    private isLatestDetectObjectMove() {
+        const currentTimestamp = Date.now();
+
+        return currentTimestamp - this.latestDetectedMoveTimestamp < 1000;
     }
 }
