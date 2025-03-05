@@ -8,9 +8,9 @@ export class CharacterStatusPartialUpdateParser implements PacketParser {
         const packet3 = packet2.slice('1700000002dbb61f00'.length, packet2.length);
 
         const data = packet3
-            .split('0400')
+            .replace(/0400[a-f0-9]{2}000000/g, match => '\n' + match.toString())
+            .split('\n')
             .filter(Boolean)
-            .map(e => `0400${e}`)
             .map(d => {
                 const length = parseInt(d.slice(4, 6), 16);
 

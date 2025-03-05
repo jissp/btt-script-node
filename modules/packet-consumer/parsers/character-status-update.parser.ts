@@ -2,6 +2,9 @@ import { PacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern } from '../packet-consumer.interface';
 import * as fs from 'node:fs';
 
+/**
+ * 544f5a202c00000077360000002c00000098ac25cfffffffff0098ac25cf01000000fc00008001000000001600000002668808000400010000006804000400000032313035
+ */
 export class CharacterStatusUpdateParser implements PacketParser {
     parse(packet: string): ParsedPacket {
         const [, packet2] = packet.split(PacketPattern.캐릭터상태업데이트);
@@ -37,9 +40,14 @@ export class CharacterStatusUpdateParser implements PacketParser {
             `---------------\n${packet}\n${JSON.stringify(result)}\n`,
             err => {},
         );
-        // if (Number.isNaN(Number(result.h)) || Number.isNaN(Number(result.m))) {
-        //     console.log(packet);
-        // }
+
+        if (result['h'] && Number.isNaN(Number(result.h))) {
+            console.log(packet);
+        }
+
+        if (result['m'] && Number.isNaN(Number(result.m))) {
+            console.log(packet);
+        }
 
         return {
             type: PacketPattern.캐릭터상태업데이트,
