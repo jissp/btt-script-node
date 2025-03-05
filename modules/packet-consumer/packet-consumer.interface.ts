@@ -45,8 +45,6 @@ export const excludePatterns = [
     '000001000000',
     UnknownPattern['/m /m'],
     UnknownPattern.Unknown1,
-    PacketPattern.캐릭터상태업데이트,
-    PacketPattern.체력마력자동회복,
     PacketPattern.chatMessageUID,
     UnknownPattern.MeramClockService,
     UnknownPattern.MeramUIHelpTooltipService,
