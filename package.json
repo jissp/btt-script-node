@@ -1,19 +1,27 @@
 {
   "scripts": {
     "start:health-support": "npx tsc --build --clean && ts-node health-support/index.ts",
-    "build:health-support": "esbuild health-support/health-support.ts --bundle --outfile=dist/health-support.js --platform=node --format=cjs --inject:reflect-metadata"
+    "start:hellfire-support": "npx tsc --build --clean && ts-node hellfire-support/index.ts",
+    "start:auto-king-quest": "npx t2sc --build --clean && ts-node auto-king-quest/index.ts"
   },
   "dependencies": {
     "axios": "^1.7.9",
     "build-url-ts": "^6.1.8",
     "esbuild": "^0.25.0",
+    "ioredis": "^5.5.0",
     "prettier": "^3.5.1",
+    "redis": "^4.7.0",
     "reflect-metadata": "^0.2.2",
+    "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsyringe": "^4.8.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.4"
+    "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.15",
+    "@types/node": "^22.13.4",
+    "jest": "^29.7.0",
+    "lodash": "^4.17.21"
   }
 }

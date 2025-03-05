@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { uSleep } from '../utils';
 import { Latency, WindowRect } from '../common';
 import { BttClient } from './btt.client';
-import { BttKeyCode, ImageSearchOn, ImageSearchRegion } from './btt.interface';
+import { BttKeyCode, ImageSearchAfterMouseMoveType, ImageSearchOn, ImageSearchRegion } from './btt.interface';
 import { BttStorage } from '../storage';
 
 @injectable()
@@ -40,11 +40,21 @@ export class BttService {
     /**
      * 연속된 키 입력을 전송한다.
      * @param keyCodes
+     * @param options
      */
-    public async sendKeys(...keyCodes: BttKeyCode[]) {
+    public async sendKeys({
+        keyCodes,
+        options,
+    }: {
+        keyCodes: BttKeyCode[];
+        options?: {
+            keyInternal?: number;
+        };
+    }) {
         const keyCodeLength = keyCodes.length;
+        const defaultKeyInternal = options?.keyInternal || Latency.KeyCode;
         for (const [index, keyCode] of keyCodes.entries()) {
-            const keyInterval = index < keyCodeLength - 1 ? Latency.KeyCode : undefined;
+            const keyInterval = index < keyCodeLength - 1 ? defaultKeyInternal : undefined;
 
             await this.sendKey(keyCode, keyInterval);
         }
@@ -56,16 +66,18 @@ export class BttService {
         searchOn,
         searchRegion,
         interval,
+        searchAfterMoveMouseTo,
     }: {
         imageWithBase64: string;
         threshold?: number;
         searchOn?: ImageSearchOn;
         searchRegion: ImageSearchRegion;
         interval?: number;
+        searchAfterMoveMouseTo?: ImageSearchAfterMouseMoveType;
     }) {
         const defaultConfig = {
-            BTTFindImageSearchOn: 5, // 0: 모든 화면, 5: 집중된 창
-            BTTFindImageSearchRegion: 0, // 0: All, 1: Top Left, 3: Bottom Left, 4: Bottom Right, 5: Top Half, 6: Bottom Half,
+            BTTFindImageSearchOn: ImageSearchOn.FocusedWindow, // 0: 모든 화면, 5: 집중된 창
+            BTTFindImageSearchRegion: ImageSearchRegion.All, // 0: All, 1: Top Left, 3: Bottom Left, 4: Bottom Right, 5: Top Half, 6: Bottom Half,
             BTTFindImageTreshold: 0.95000002384185791,
             BTTFindImageUseDifferentDarkModeImage: false,
             BTTFindImageSquareSize: 80,
@@ -74,7 +86,7 @@ export class BttService {
             BTTFindImageSaveToVariable: true,
             BTTFindImageBTTMouseMoveDragType: 0,
             BTTFindImageContinueActionExecution: false,
-            BTTFindImageMoveMouseTo: 0,
+            BTTFindImageMoveMouseTo: ImageSearchAfterMouseMoveType.NotMove,
             BTTFindImageBTTMouseMoveDuration: 0,
             BTTActionWaitForConditionsInterval: 0.10000001192092896,
         };
@@ -84,6 +96,7 @@ export class BttService {
             BTTFindImageSearchRegion: searchRegion || defaultConfig.BTTFindImageSearchRegion,
             BTTFindImageTreshold: threshold || defaultConfig.BTTFindImageTreshold,
             BTTActionWaitForConditionsInterval: interval || defaultConfig.BTTActionWaitForConditionsInterval,
+            BTTFindImageMoveMouseTo: searchAfterMoveMouseTo || defaultConfig.BTTFindImageMoveMouseTo,
         });
 
         await this.client.triggerAction({

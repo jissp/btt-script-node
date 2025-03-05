@@ -3,6 +3,8 @@ import { BaseScript, GameRect, Latency, ManaRecoveryItems, ocrByClipboard, scree
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
+import { Wntnftk } from '../modules/base-character-spell';
+import { CharacterFactory } from '../modules/character';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -20,8 +22,11 @@ export class HellfireSupport extends BaseScript {
     private freezeModeTimer: Timer;
     private itemCheckerTimer: Timer;
 
-    constructor(@inject('ScriptName') protected readonly scriptName: string) {
-        super();
+    constructor(
+        @inject('ScriptName') protected readonly scriptName: string,
+        @inject(CharacterFactory) characterFactory: CharacterFactory,
+    ) {
+        super(characterFactory.create<Wntnftk>(Wntnftk));
 
         this.hellFireTimer = this.timerFactory.create('hellfire', 9000);
         this.loopCheckManaTimer = this.timerFactory.create('check-mana', 2000);
@@ -30,19 +35,18 @@ export class HellfireSupport extends BaseScript {
     }
 
     protected async initialized(): Promise<void> {
-        await this.switchMode(SupportMode.HellFire);
+        await this.switchMode(SupportMode.None);
         await this.hellFireTimer.init();
+
+        do {
+            await this.terminateIfNotRunning();
+            await this.bttService.sendKey(BttKeyCode.s, Latency.KeyCode);
+
+            await uSleep(100);
+        } while(!this.character.isSetSelfObjectId());
 
         // 아이템창부터 키고 시작하기
         await this.bttService.sendKey(BttKeyCode.i, Latency.KeyCode);
-
-        // 마나가 없다면 회복 하기
-        if (await this.isEmptyMana()) {
-            await this.tryManaRecovery(99);
-
-            // 공력증강 후 피 회복
-            await this.trySelfHelling();
-        }
     }
 
     protected async handle(): Promise<void> {
@@ -78,11 +82,11 @@ export class HellfireSupport extends BaseScript {
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
-        if (this.loopCheckManaTimer.isExpired() && (await this.isEmptyMana())) {
+        if (await this.isEmptyMana()) {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
-            await this.trySelfHelling();
+            await this.trySelfHeal();
         }
 
         if (isFreeze && !this.hellFireTimer.isExpired()) {
@@ -92,8 +96,8 @@ export class HellfireSupport extends BaseScript {
         }
 
         // 몬스터 찾기 전 체력이 부족한 경우 공격받는 중일 수 있음.
-        if (await this.isEmptyHealth()) {
-            await this.trySelfHelling();
+        if (this.isEmptyHealth()) {
+            await this.trySelfHeal();
             await this.trySafetyFreeze();
             await uSleep(100);
         }
@@ -105,15 +109,15 @@ export class HellfireSupport extends BaseScript {
         await uSleep(600);
 
         // 헬파이어 날리기 전에 공격받고 있는지 체크
-        if (await this.isEmptyHealth()) {
-            await this.trySelfHelling();
+        if (this.isEmptyHealth()) {
+            await this.trySelfHeal();
             await this.trySafetyFreeze();
             await uSleep(100);
         }
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
         await this.runCurseAndHellfire();
-        await uSleep(200);
+        await uSleep(1000);
 
         return true;
     }
@@ -130,8 +134,8 @@ export class HellfireSupport extends BaseScript {
             }
 
             // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
-            if (await this.isEmptyHealth()) {
-                await this.trySelfHelling();
+            if (this.isEmptyHealth()) {
+                await this.trySelfHeal();
                 await this.trySafetyFreeze();
             }
 
@@ -140,7 +144,7 @@ export class HellfireSupport extends BaseScript {
                 isNextTarget: true,
             });
 
-            await uSleep(100);
+            await uSleep(200);
         }
     }
 
@@ -167,7 +171,7 @@ export class HellfireSupport extends BaseScript {
                 return false;
             }
 
-            if (await this.isZeroMana()) {
+            if (this.isZeroMana()) {
                 const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
 
                 const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
@@ -196,7 +200,7 @@ export class HellfireSupport extends BaseScript {
             await this.terminateIfNotRunning();
 
             await this.bttService.sendKey(BttKeyCode.Number1, Latency.KeyCode);
-        } while (await this.isEmptyMana());
+        } while (this.isEmptyMana());
 
         await this.loopCheckManaTimer.set();
         return true;
@@ -225,19 +229,22 @@ export class HellfireSupport extends BaseScript {
         await this.hellFireTimer.set();
     }
 
-    private async trySelfHelling() {
+    private async trySelfHeal() {
         let healingCount = 0;
         do {
             await this.terminateIfNotRunning();
+            if(this.mode === SupportMode.None) {
+                break;
+            }
 
             const isCheck = healingCount++ % 5 === 0;
-            if (isCheck && (await this.isZeroHealth())) {
+            if (isCheck && (this.isZeroHealth())) {
                 break;
             }
 
             await this.selfHealing(isCheck);
-            await uSleep(Latency.KeyCode);
-        } while (await this.isEmptyHealth());
+            await uSleep(200);
+        } while (this.isEmptyHealth());
 
         if (this.defensiveTimer.isExpired()) {
             await uSleep(Latency.KeyCode);
@@ -246,7 +253,9 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async runDefensiveFreezeByKeyCode(arrowKeyCode: BttKeyCode) {
-        await this.bttService.sendKeys(BttKeyCode.Number6, BttKeyCode.Home, arrowKeyCode, BttKeyCode.Enter);
+        await this.bttService.sendKeys({
+            keyCodes: [BttKeyCode.Number6, BttKeyCode.Home, arrowKeyCode, BttKeyCode.Enter],
+        });
     }
 
     private async tryRefreshItemList() {

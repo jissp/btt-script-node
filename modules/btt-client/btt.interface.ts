@@ -30,6 +30,11 @@ export enum ImageSearchRegion {
     BottomHalf = 6
 }
 
+export enum ImageSearchAfterMouseMoveType {
+    NotMove= 0,
+    MoveToCenter= 2,
+}
+
 export enum BttKeyCode {
     a = '0',
     b = '11',

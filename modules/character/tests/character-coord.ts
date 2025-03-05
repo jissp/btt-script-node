@@ -3,15 +3,16 @@ import { container } from 'tsyringe';
 import { HealthSupport } from '../../../health-support/health-support';
 import { BttService } from '../../btt-client';
 import { uSleep } from '../../utils';
-import { ocrByClipboard, screenCapture } from '../externals';
-import { GameRect } from '../common.interface';
+import { Coord } from '../character';
+import { Wntnftk } from '../../base-character-spell';
+import { CharacterFactory } from '../character.factory';
 
 async function main() {
     console.log('wait 3 seconds');
     await uSleep(3000);
 
     console.log('start');
-    container.register<string>('ScriptName', { useValue: 'TEST' });
+    container.register<string>('ScriptName', {useValue: 'TEST'});
 
     const scriptor = container.resolve<HealthSupport>(HealthSupport);
     await scriptor.init();
@@ -23,28 +24,23 @@ async function main() {
      **************************************************** */
     const activeWindowRect = await bttService.getActiveWindowRect();
 
-    do {
-        await screenCapture({
-            rect: activeWindowRect,
-        });
+    const characterFactory = container.resolve(CharacterFactory);
+    const character = characterFactory.create(Wntnftk);
 
-        const before = Date.now();
-        const text = await ocrByClipboard(GameRect.CharacterCoordinate, {
-            isDebugMode: true,
-            contrast: 2.5,
-        });
+    let moveCount = 0;
+    let coords: Coord[] = [];
 
-        console.log(text);
+    while (true) {
+        await scriptor.terminateIfNotRunning();
 
-        const after = Date.now();
-
-        console.log(after - before);
+        console.log(await character.getCurrentCoordinate());
 
         await uSleep(500);
-    } while (true);
+    }
 }
 
 // 프로그램 시작
 main().catch(error => {
     console.error('An error occurred during the migration process:', error);
 });
+

@@ -18,6 +18,7 @@ export enum SearchImageBase64Type {
 export enum GameRectType {
     MapName = 'MapName',
     GameBox = 'GameBox',
+    GameBoxForKingQuest = 'GameBoxForKingQuest',
     ItemBox = 'ItemBox',
     BuffBox = 'BuffBox',
     GameLog = 'GameLog',
@@ -44,6 +45,12 @@ export const GameRect: { [key in GameRectType]: WindowRect } = {
         y: 100 - 보정.y,
         width: 800,
         height: 700,
+    },
+    [GameRectType.GameBoxForKingQuest]: {
+        x: 520,
+        y: 200,
+        width: 580,
+        height: 300,
     },
     [GameRectType.ItemBox]: {
         x: 1210 - 보정.x,
@@ -82,10 +89,10 @@ export const GameRect: { [key in GameRectType]: WindowRect } = {
         height: 186,
     },
     [GameRectType.CharacterCoordinate]: {
-        x: 1300 - 보정.x,
-        y: 971 - 보정.y,
-        width: 190,
-        height: 24,
+        x: 1220,
+        y: 926,
+        width: 235,
+        height: 40,
     },
 };
 

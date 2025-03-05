@@ -3,6 +3,8 @@ import { BaseScript, GameRect, Latency, ocrByClipboard, screenCapture } from '..
 import { uSleep } from '../modules/utils';
 import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
+import { Healer } from '../modules/base-character-spell';
+import { CharacterFactory } from '../modules/character';
 
 enum SupportMode {
     None = 'none',
@@ -20,8 +22,11 @@ export class HealthSupport extends BaseScript {
     private manaInjectionTimer: Timer;
     private curseModeOffTimer: Timer;
 
-    constructor(@inject('ScriptName') protected readonly scriptName: string) {
-        super();
+    constructor(
+        @inject('ScriptName') protected readonly scriptName: string,
+        @inject(CharacterFactory) characterFactory: CharacterFactory,
+    ) {
+        super(characterFactory.create<Healer>(Healer));
 
         this.whiteTigerTimer = this.timerFactory.create('white-tiger', 0);
         this.refreshWindowTimer = this.timerFactory.create('refresh-window', 200);
@@ -93,7 +98,7 @@ export class HealthSupport extends BaseScript {
     }
 
     private async runHealthMode() {
-        if (await this.isZeroHealth()) {
+        if (this.isZeroHealth()) {
             const isTargetSelecting = await this.isTargetSelecting();
 
             await this.tryResurrection();
@@ -109,8 +114,8 @@ export class HealthSupport extends BaseScript {
             await uSleep(100);
         }
 
-        if (await this.isEmptyMana()) {
-            if (await this.isZeroMana()) {
+        if (this.isEmptyMana()) {
+            if (this.isZeroMana()) {
                 await this.useManaRecoveryItem();
                 await uSleep(80);
             }
@@ -125,7 +130,7 @@ export class HealthSupport extends BaseScript {
             await this.runDefensiveIfTabTab();
         }
 
-        const isModeratelyEmptyMana = await this.isModeratelyEmptyMana();
+        const isModeratelyEmptyMana = this.isModeratelyEmptyMana();
         for (let healLoop = 0; healLoop < 5; healLoop++) {
             await this.terminateIfNotRunning();
 
@@ -152,7 +157,7 @@ export class HealthSupport extends BaseScript {
             return;
         }
 
-        if (await this.isZeroHealth()) {
+        if (this.isZeroHealth()) {
             await this.tryResurrection(100);
 
             await uSleep(100);
@@ -184,12 +189,12 @@ export class HealthSupport extends BaseScript {
         do {
             await this.terminateIfNotRunning();
 
-            if (++tryCount > limitCount || (await this.isZeroHealth())) {
+            if (++tryCount > limitCount || (this.isZeroHealth())) {
                 return false;
             }
 
             await this.bttService.sendKey(BttKeyCode.Number1, 100);
-        } while (await this.isEmptyMana());
+        } while (this.isEmptyMana());
 
         return true;
     }
@@ -231,7 +236,7 @@ export class HealthSupport extends BaseScript {
             }
 
             // 금강불체가 5초 이상 남아있을 경우 마나 주입
-            await this.bttService.sendKeys(BttKeyCode.Number5, BttKeyCode.Enter);
+            await this.bttService.sendKeys({ keyCodes: [BttKeyCode.Number5, BttKeyCode.Enter] });
             await this.manaInjectionTimer.set();
         }
     }

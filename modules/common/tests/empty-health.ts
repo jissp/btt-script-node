@@ -18,7 +18,7 @@ async function main() {
     /* ****************************************************
      *
      **************************************************** */
-    if(await scriptor.isEmptyHealth()) {
+    if(scriptor.isEmptyHealth()) {
         console.log('Health is empty');
     }
 

@@ -5,16 +5,23 @@ import { GameRect, Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
 import { LocalStorage } from '../local-storage';
 import { ocrByClipboard, screenCapture } from './externals';
-import { BttKeyCode, BttService, ImageSearchOn, ImageSearchRegion } from '../btt-client';
+import { BttKeyCode, BttService, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
+import { PacketConsumer, PacketPattern, ParsedPacket } from '../packet-consumer';
+import { Character } from '../character';
+import { PacketParser } from '../packet-consumer/packet-parser';
 
 export abstract class BaseScript {
+    protected readonly character: Character;
+
     protected readonly executePath: string;
     protected readonly storagePath: string;
     protected readonly bttService: BttService;
     protected readonly localStorage: LocalStorage;
     protected readonly bttStorage: BttStorage;
+    protected readonly packetWatcher: PacketConsumer;
+    protected readonly packetParser: PacketParser;
     protected readonly timerFactory: TimerFactory;
 
     protected abstract readonly scriptName: string;
@@ -23,13 +30,16 @@ export abstract class BaseScript {
 
     protected defensiveTimer: Timer;
 
-    protected constructor() {
+    protected constructor(character: Character) {
+        this.character = character;
         this.executePath = path.resolve('.');
         this.storagePath = `/tmp`;
         this.localStorage = container.resolve(LocalStorage);
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
         this.timerFactory = container.resolve(TimerFactory);
+        this.packetWatcher = container.resolve(PacketConsumer);
+        this.packetParser = container.resolve(PacketParser);
 
         this.scriptStartedTimestamp = new Date().getTime();
 
@@ -43,6 +53,8 @@ export abstract class BaseScript {
         this._activeWindowRect = await this.bttService.getActiveWindowRect();
 
         await this.defensiveTimer.init();
+
+        this.packetWatcher.process((packet: ParsedPacket) => this.callbackForPacket(packet));
 
         await this.initialized();
     }
@@ -74,6 +86,44 @@ export abstract class BaseScript {
             }
 
             await this.bttStorage.scriptVariable('last-error', error as string);
+        }
+    }
+
+    private async callbackForPacket(packet: ParsedPacket) {
+        await this.terminateIfNotRunning();
+
+        switch (packet.type) {
+            case PacketPattern.캐릭터상태업데이트:
+            case PacketPattern.체력마력자동회복:
+                try {
+                    const packetDataKeys = Object.keys(packet.data);
+
+                    if (packetDataKeys.includes('h')) {
+                        this.character.updateHealth(Number(packet.data.h));
+                    }
+
+                    if (packetDataKeys.includes('m')) {
+                        this.character.updateMana(Number(packet.data.m));
+                    }
+
+                    if (packetDataKeys.includes('mm')) {
+                        this.character.updateMaxMana(Number(packet.data.mm));
+                    }
+                } catch (error) {
+                }
+                break;
+            case PacketPattern.체력바:
+                if(packet.data) {
+                    if(this.character.getSelfObjectId() === packet.data.objectId) {
+                        this.character.setHpBarValue(packet.data.currentHpBar);
+                    }
+                }
+                break;
+            case PacketPattern.P_ClientSelfLook:
+                if(packet.data) {
+                    this.character.setSelfObjectId(packet.data.selfObjectId);
+                }
+                break;
         }
     }
 
@@ -131,34 +181,48 @@ export abstract class BaseScript {
     }
 
     // Game 관련
-    async isZeroHealth(): Promise<boolean> {
-        return this.bttService.imageSearch({
-            imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroHp : SearchImageBase64Type.ZeroHp,
-            searchRegion: ImageSearchRegion.BottomRight,
-        });
+    isZeroHealth(): boolean {
+        return this.character.getHealth() === 0;
+        // return this.bttService.imageSearch({
+        //     imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroHp : SearchImageBase64Type.ZeroHp,
+        //     searchRegion: ImageSearchRegion.BottomRight,
+        // });
     }
 
-    async isEmptyHealth(): Promise<boolean> {
-        return this.bttService.imageSearch({
-            imageWithBase64: SearchImageBase64Type.EmptyHp,
-            searchRegion: ImageSearchRegion.BottomRight,
-        });
+    isEmptyHealth(): boolean {
+        return this.character.getHealth() <= 10000;
+        // return this.bttService.imageSearch({
+        //     imageWithBase64: SearchImageBase64Type.EmptyHp,
+        //     searchRegion: ImageSearchRegion.BottomRight,
+        // });
     }
 
-    async isModeratelyEmptyMana() {
-        return this.bttService.imageSearch({
-            imageWithBase64: this.isMinimumMode
-                ? SearchImageBase64Type.ModeratelyEmptyMp
-                : SearchImageBase64Type.ModeratelyEmptyMp,
-            searchRegion: ImageSearchRegion.BottomRight,
-        });
+    isModeratelyEmptyMana() {
+        const maxMana = this.character.getMaxMana();
+        const mana = this.character.getMana();
+
+        const percentage = (mana / maxMana) * 100;
+
+        return percentage < 50;
+        // return this.bttService.imageSearch({
+        //     imageWithBase64: this.isMinimumMode
+        //         ? SearchImageBase64Type.ModeratelyEmptyMp
+        //         : SearchImageBase64Type.ModeratelyEmptyMp,
+        //     searchRegion: ImageSearchRegion.BottomRight,
+        // });
     }
 
-    async isEmptyMana() {
-        return this.bttService.imageSearch({
-            imageWithBase64: SearchImageBase64Type.EmptyMp,
-            searchRegion: ImageSearchRegion.BottomRight,
-        });
+    isEmptyMana() {
+        const mana = this.character.getMana();
+        const maxMana = this.character.getMaxMana();
+
+        const percentage = (mana / maxMana) * 100;
+
+        return percentage < 20;
+        // return this.bttService.imageSearch({
+        //     imageWithBase64: SearchImageBase64Type.EmptyMp,
+        //     searchRegion: ImageSearchRegion.BottomRight,
+        // });
     }
 
     async isEmptyManaFromLog() {
@@ -167,11 +231,13 @@ export abstract class BaseScript {
         return message.includes('마력이 부족합니다.');
     }
 
-    async isZeroMana() {
-        return this.bttService.imageSearch({
-            imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMpMinimum : SearchImageBase64Type.ZeroMp,
-            searchRegion: ImageSearchRegion.BottomRight,
-        });
+    isZeroMana() {
+        // return this.bttService.imageSearch({
+        //     imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMpMinimum : SearchImageBase64Type.ZeroMp,
+        //     searchRegion: ImageSearchRegion.BottomRight,
+        // });
+
+        return this.character.getMana() < 30;
     }
 
     async isTargetSelecting() {
@@ -224,7 +290,7 @@ export abstract class BaseScript {
     }
 
     async runDefensiveIfTabTab() {
-        await this.bttService.sendKeys(BttKeyCode.Number8, BttKeyCode.Number9);
+        await this.bttService.sendKeys({ keyCodes: [BttKeyCode.Number8, BttKeyCode.Number9] });
 
         await this.defensiveTimer.set();
     }
@@ -237,7 +303,7 @@ export abstract class BaseScript {
     }
 
     async useManaRecoveryItem() {
-        await this.bttService.sendKeys(BttKeyCode.u, BttKeyCode.a);
+        await this.bttService.sendKeys({ keyCodes: [BttKeyCode.u, BttKeyCode.a] });
     }
 
     async getLastGameLog() {
@@ -273,7 +339,9 @@ export abstract class BaseScript {
         }
 
         await this.bttService.sendKey(BttKeyCode.c, 500); // C
-        await this.bttService.sendKeys(BttKeyCode[shortCutA], BttKeyCode[','], BttKeyCode[shortCutB], BttKeyCode.Enter);
+        await this.bttService.sendKeys({
+            keyCodes: [BttKeyCode[shortCutA], BttKeyCode[','], BttKeyCode[shortCutB], BttKeyCode.Enter],
+        });
     }
 
     public async castSpellOnTarget(
@@ -286,10 +354,12 @@ export abstract class BaseScript {
         await this.terminateIfNotRunning();
 
         if (options?.isNextTarget) {
-            return this.bttService.sendKeys(keyCode, options.nextTargetKeyCode ?? BttKeyCode.ArrowUp, BttKeyCode.Enter);
+            return this.bttService.sendKeys({
+                keyCodes: [keyCode, options.nextTargetKeyCode ?? BttKeyCode.ArrowUp, BttKeyCode.Enter],
+            });
         }
 
-        return this.bttService.sendKeys(keyCode, BttKeyCode.Enter);
+        return this.bttService.sendKeys({ keyCodes: [keyCode, BttKeyCode.Enter] });
     }
 
     public extractBuffNameAndSeconds(str: string): [string, number] | [] {
