@@ -54,8 +54,7 @@ export class PacketSniffer {
     }
 
     private processTcpDumpPacket(packet: string) {
-        const data = Buffer.from(packet, 'hex').toString('ascii');
-        this.variableQueue.push(data);
+        this.variableQueue.push(Buffer.from(packet, 'hex').toString('ascii'));
     }
 
     private async consumeVariableQueue() {
