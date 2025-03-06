@@ -9,7 +9,7 @@ import { PacketType } from '../modules/packet-sniffer';
 
 enum SupportMode {
     HellFire = 'hellfire',
-    // HellFireWithoutFreeze = 'hellfire-without-freeze',
+    HellFireWithoutFreeze = 'hellfire-without-freeze',
     Freeze = 'freeze',
     None = 'none',
 }
@@ -68,9 +68,9 @@ export class HellfireSupport extends BaseScript {
             case SupportMode.HellFire:
                 await this.runHellFireMode(true);
                 break;
-            // case SupportMode.HellFireWithoutFreeze:
-            //     await runHellFireMode(false);
-            //     break;
+            case SupportMode.HellFireWithoutFreeze:
+                await this.runHellFireMode(false);
+                break;
             case SupportMode.Freeze:
                 if (isChanged) {
                     await this.freezeModeTimer.set();
@@ -88,7 +88,7 @@ export class HellfireSupport extends BaseScript {
 
     private async runHellFireMode(isFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
-        if (await this.isEmptyMana()) {
+        if (this.isManaBelow(20)) {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
@@ -103,14 +103,16 @@ export class HellfireSupport extends BaseScript {
 
         // 몬스터 찾기 전 체력이 부족한 경우 공격받는 중일 수 있음.
         // if (this.isEmptyHealth()) {
-        if (this.detectedDecrementHpBarValue > 1) {
+        if (this.isDetectCharacterHit()) {
+            this.unSetDetectCharacterHit();
             await this.trySelfHeal();
             await this.trySafetyFreeze();
+
             await uSleep(100);
-            this.detectedDecrementHpBarValue = 0;
         }
 
-        if (!(await this.checkMonsterTarget(true))) {
+        const isSearchedMonster = await this.searchMonster(true);
+        if (!isSearchedMonster) {
             return false;
         }
 
@@ -119,7 +121,9 @@ export class HellfireSupport extends BaseScript {
         await uSleep(600);
 
         // 헬파이어 날리기 전에 공격받고 있는지 체크
-        if (this.isEmptyHealth()) {
+        if (this.isHealthBelowByValue(10000) || this.isDetectCharacterHit()) {
+            this.unSetDetectCharacterHit();
+
             await this.trySelfHeal();
             await this.trySafetyFreeze();
             await uSleep(100);
@@ -145,10 +149,11 @@ export class HellfireSupport extends BaseScript {
             }
 
             // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
-            if (this.detectedDecrementHpBarValue > 1) {
+            if (this.isDetectCharacterHit()) {
+                this.unSetDetectCharacterHit();
+
                 await this.trySelfHeal();
                 await this.trySafetyFreeze();
-                this.detectedDecrementHpBarValue = 0;
             }
 
             const spellKeyCode = Math.round(Math.random() * 10) % 2 === 0 ? BttKeyCode.Number6 : BttKeyCode.Number7;
@@ -157,19 +162,6 @@ export class HellfireSupport extends BaseScript {
             });
 
             await uSleep(200);
-        }
-    }
-
-    private async trySafetyFreeze() {
-        console.log('캐릭터 주변의 적에게 마비를 겁니다.');
-        for (const arrowKeyCode of [
-            BttKeyCode.ArrowUp,
-            BttKeyCode.ArrowDown,
-            BttKeyCode.ArrowLeft,
-            BttKeyCode.ArrowRight,
-        ]) {
-            await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
-            await uSleep(60);
         }
     }
 
@@ -186,6 +178,23 @@ export class HellfireSupport extends BaseScript {
         return this.mode === mode;
     }
 
+    /**
+     * 캐릭터 주변의 적(동, 서, 남, 북)에게 마비를 겁니다.
+     * @private
+     */
+    private async trySafetyFreeze() {
+        console.log('캐릭터 주변의 적에게 마비를 겁니다.');
+        for (const arrowKeyCode of [
+            BttKeyCode.ArrowUp,
+            BttKeyCode.ArrowDown,
+            BttKeyCode.ArrowLeft,
+            BttKeyCode.ArrowRight,
+        ]) {
+            await this.runDefensiveFreezeByKeyCode(arrowKeyCode);
+            await uSleep(60);
+        }
+    }
+
     private async tryManaRecovery(limitCount = 9) {
         let tryCount = 0;
         do {
@@ -193,9 +202,8 @@ export class HellfireSupport extends BaseScript {
                 return false;
             }
 
-            if (this.isZeroMana()) {
+            if (this.isEmptyMana()) {
                 const itemRows = this.localStorage.variable<string[]>('item-rows') ?? [];
-
                 const manaRecoveryItems = itemRows.filter(row => ManaRecoveryItems.some(item => row.includes(item)));
 
                 // 마나회복용 아이템이 없다면 종료
@@ -222,7 +230,7 @@ export class HellfireSupport extends BaseScript {
             await this.terminateIfNotRunning();
 
             await this.bttService.sendKey(BttKeyCode.Number1, Latency.KeyCode);
-        } while (this.isEmptyMana());
+        } while (this.isManaBelow(20));
 
         await this.loopCheckManaTimer.set();
         return true;
@@ -257,18 +265,13 @@ export class HellfireSupport extends BaseScript {
         let healingCount = 0;
         do {
             await this.terminateIfNotRunning();
-            if (this.mode === SupportMode.None) {
+            if (this.isEmptyHealth() || (await this.isMode(SupportMode.None, true))) {
                 break;
             }
 
-            const isCheck = healingCount++ % 5 === 0;
-            if (isCheck && this.isZeroHealth()) {
-                break;
-            }
-
-            await this.selfHealing(isCheck);
+            await this.selfHealing(true);
             await uSleep(200);
-        } while (this.isEmptyHealth());
+        } while (this.isHealthBelowByValue(10000));
 
         if (this.defensiveTimer.isExpired()) {
             await uSleep(Latency.KeyCode);
@@ -302,6 +305,14 @@ export class HellfireSupport extends BaseScript {
     private isLatestDetectObjectMove() {
         const currentTimestamp = Date.now();
 
-        return currentTimestamp - this.latestDetectedMoveTimestamp < 1000;
+        return currentTimestamp - this.latestDetectedOtherObjectMoveTimestamp < 1000;
+    }
+
+    private isDetectCharacterHit() {
+        return this.detectedDecrementHpBarValue > 1;
+    }
+
+    private unSetDetectCharacterHit() {
+        this.detectedDecrementHpBarValue = 0;
     }
 }

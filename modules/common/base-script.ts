@@ -32,7 +32,7 @@ export abstract class BaseScript {
     protected defensiveTimer: Timer;
 
     protected excludePacketPatterns: PacketType[] = [];
-    protected latestDetectedMoveTimestamp: number = 0;
+    protected latestDetectedOtherObjectMoveTimestamp: number = 0;
     protected detectedDecrementHpBarValue: number = 0;
 
     protected constructor(character: Character) {
@@ -152,7 +152,7 @@ export abstract class BaseScript {
                 if (data) {
                     if (this.character.getSelfObjectId() !== data.objectId) {
                         console.log(`오브젝트(${data.objectId}) 움직임 감지`);
-                        this.latestDetectedMoveTimestamp = Date.now();
+                        this.latestDetectedOtherObjectMoveTimestamp = Date.now();
                     }
                 }
                 break;
@@ -214,64 +214,31 @@ export abstract class BaseScript {
         }
     }
 
-    // Game 관련
-    isZeroHealth(): boolean {
-        return this.character.getHealth() === 0;
-        // return this.bttService.imageSearch({
-        //     imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroHp : SearchImageBase64Type.ZeroHp,
-        //     searchRegion: ImageSearchRegion.BottomRight,
-        // });
+    isHealthBelowByValue(value: number): boolean {
+        return this.character.getHealth() <= value;
     }
 
     isEmptyHealth(): boolean {
-        return this.character.getHealth() <= 10000;
-        // return this.bttService.imageSearch({
-        //     imageWithBase64: SearchImageBase64Type.EmptyHp,
-        //     searchRegion: ImageSearchRegion.BottomRight,
-        // });
+        return this.isHealthBelowByValue(0);
     }
 
-    isModeratelyEmptyMana() {
-        const maxMana = this.character.getMaxMana();
+    isManaBelow(percent: number) {
         const mana = this.character.getMana();
+        const maxMana = this.character.getMaxMana();
 
-        const percentage = (mana / maxMana) * 100;
+        const currentPercent = (mana / maxMana) * 100;
 
-        return percentage < 50;
-        // return this.bttService.imageSearch({
-        //     imageWithBase64: this.isMinimumMode
-        //         ? SearchImageBase64Type.ModeratelyEmptyMp
-        //         : SearchImageBase64Type.ModeratelyEmptyMp,
-        //     searchRegion: ImageSearchRegion.BottomRight,
-        // });
+        return currentPercent < percent;
     }
 
     isEmptyMana() {
-        const mana = this.character.getMana();
-        const maxMana = this.character.getMaxMana();
-
-        const percentage = (mana / maxMana) * 100;
-
-        return percentage < 20;
-        // return this.bttService.imageSearch({
-        //     imageWithBase64: SearchImageBase64Type.EmptyMp,
-        //     searchRegion: ImageSearchRegion.BottomRight,
-        // });
+        return this.character.getMana() < 30;
     }
 
     async isEmptyManaFromLog() {
         const message = await this.getLastGameLog();
 
         return message.includes('마력이 부족합니다.');
-    }
-
-    isZeroMana() {
-        // return this.bttService.imageSearch({
-        //     imageWithBase64: this.isMinimumMode ? SearchImageBase64Type.ZeroMpMinimum : SearchImageBase64Type.ZeroMp,
-        //     searchRegion: ImageSearchRegion.BottomRight,
-        // });
-
-        return this.character.getMana() < 30;
     }
 
     async isTargetSelecting() {
@@ -296,9 +263,9 @@ export abstract class BaseScript {
         });
     }
 
-    async checkMonsterTarget(isNext: boolean) {
+    async searchMonster(isNextTarget: boolean) {
         await this.castSpellOnTarget(BttKeyCode.Number6, {
-            isNextTarget: isNext,
+            isNextTarget: isNextTarget,
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
 

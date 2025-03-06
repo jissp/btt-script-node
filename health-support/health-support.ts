@@ -98,7 +98,7 @@ export class HealthSupport extends BaseScript {
     }
 
     private async runHealthMode() {
-        if (this.isZeroHealth()) {
+        if (this.isEmptyHealth()) {
             const isTargetSelecting = await this.isTargetSelecting();
 
             await this.tryResurrection();
@@ -114,10 +114,10 @@ export class HealthSupport extends BaseScript {
             await uSleep(100);
         }
 
-        if (this.isEmptyMana()) {
-            if (this.isZeroMana()) {
+        if (this.isManaBelow(20)) {
+            if (this.isEmptyMana()) {
                 await this.useManaRecoveryItem();
-                await uSleep(80);
+                await uSleep(200);
             }
 
             if (!(await this.tryManaRecovery())) {
@@ -130,7 +130,7 @@ export class HealthSupport extends BaseScript {
             await this.runDefensiveIfTabTab();
         }
 
-        const isModeratelyEmptyMana = this.isModeratelyEmptyMana();
+        const isModeratelyEmptyMana = this.isManaBelow(50);
         for (let healLoop = 0; healLoop < 5; healLoop++) {
             await this.terminateIfNotRunning();
 
@@ -157,7 +157,7 @@ export class HealthSupport extends BaseScript {
             return;
         }
 
-        if (this.isZeroHealth()) {
+        if (this.isEmptyHealth()) {
             await this.tryResurrection(100);
 
             await uSleep(100);
@@ -189,12 +189,12 @@ export class HealthSupport extends BaseScript {
         do {
             await this.terminateIfNotRunning();
 
-            if (++tryCount > limitCount || (this.isZeroHealth())) {
+            if (++tryCount > limitCount || (this.isEmptyHealth())) {
                 return false;
             }
 
             await this.bttService.sendKey(BttKeyCode.Number1, 100);
-        } while (this.isEmptyMana());
+        } while (this.isManaBelow(20));
 
         return true;
     }
