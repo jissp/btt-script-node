@@ -35,10 +35,6 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     updateHealth(point: number) {
-        if (this.health !== point) {
-            console.log('updateHealth', point);
-        }
-
         this.beforeHealth = this.health;
         this.health = point;
     }
@@ -48,9 +44,6 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     updateMana(point: number) {
-        if (this.mana !== point) {
-            console.log('updateMana', point);
-        }
         this.mana = point;
     }
 

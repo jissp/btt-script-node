@@ -131,10 +131,9 @@ export abstract class BaseScript {
                             this.detectedDecrementHpBarValue++;
 
                             if (this.detectedDecrementHpBarValue > 1) {
-                                console.log('피격 감지');
+                                console.log('캐릭터 피격 감지');
                             }
                         } else {
-                            console.log(`${currentHpBar} <= ${data.currentHpBar}`);
                             this.detectedDecrementHpBarValue = 0;
                         }
                     }
@@ -148,7 +147,7 @@ export abstract class BaseScript {
             case PacketType.ObjectMove:
                 if (data) {
                     if (this.character.getSelfObjectId() !== data.objectId) {
-                        console.log('오브젝트 움직임 감지');
+                        console.log(`오브젝트(${data.objectId}) 움직임 감지`);
                         this.latestDetectedMoveTimestamp = Date.now();
                     }
                 }

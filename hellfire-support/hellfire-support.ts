@@ -107,11 +107,14 @@ export class HellfireSupport extends BaseScript {
             await this.trySelfHeal();
             await this.trySafetyFreeze();
             await uSleep(100);
+            this.detectedDecrementHpBarValue = 0;
         }
 
         if (!(await this.checkMonsterTarget(true))) {
             return false;
         }
+
+        console.log('몬스터 감지');
 
         await uSleep(600);
 
@@ -130,6 +133,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async runFreezeMode() {
+        console.log('주변 적에게 마비/절망을 시전합니다.');
         for (let freezeCount = 0; freezeCount < 5; freezeCount++) {
             if (this.mode === SupportMode.None) {
                 return;
@@ -141,9 +145,10 @@ export class HellfireSupport extends BaseScript {
             }
 
             // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
-            if (this.isEmptyHealth()) {
+            if (this.detectedDecrementHpBarValue > 1) {
                 await this.trySelfHeal();
                 await this.trySafetyFreeze();
+                this.detectedDecrementHpBarValue = 0;
             }
 
             const spellKeyCode = Math.round(Math.random() * 10) % 2 === 0 ? BttKeyCode.Number6 : BttKeyCode.Number7;
@@ -156,6 +161,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async trySafetyFreeze() {
+        console.log('캐릭터 주변의 적에게 마비를 겁니다.');
         for (const arrowKeyCode of [
             BttKeyCode.ArrowUp,
             BttKeyCode.ArrowDown,
@@ -210,7 +216,7 @@ export class HellfireSupport extends BaseScript {
                 }
 
                 await this.useManaRecoveryItem();
-                await uSleep(80);
+                await uSleep(200);
             }
 
             await this.terminateIfNotRunning();
@@ -223,6 +229,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async runCurseAndHellfire() {
+        console.log('몬스터를 공격합니다.');
         await this.terminateIfNotRunning();
 
         await this.runCurse();
@@ -246,6 +253,7 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async trySelfHeal() {
+        console.log('HP 회복을 시도합니다.');
         let healingCount = 0;
         do {
             await this.terminateIfNotRunning();
