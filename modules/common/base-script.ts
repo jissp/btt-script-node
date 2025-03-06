@@ -107,8 +107,8 @@ export abstract class BaseScript {
         }
 
         switch (type) {
-            case PacketType.캐릭터상태업데이트:
-            case PacketType.체력마력자동회복:
+            case PacketType.UpdatedCharacterStatus:
+            case PacketType.UpdatedPartialCharacterStatus:
                 try {
                     const packetDataKeys = Object.keys(data);
 
@@ -125,7 +125,7 @@ export abstract class BaseScript {
                     }
                 } catch (error) {}
                 break;
-            case PacketType.체력바:
+            case PacketType.ChangedObjectHpBarValue:
                 if (data) {
                     if (this.character.getSelfObjectId() === data.objectId) {
                         const currentHpBar = this.character.getHpBarValue();
@@ -143,12 +143,12 @@ export abstract class BaseScript {
                     }
                 }
                 break;
-            case PacketType.P_ClientSelfLook:
+            case PacketType.ClientSelfLook:
                 if (data) {
                     this.character.setSelfObjectId(data.objectId);
                 }
                 break;
-            case PacketType.ObjectMove:
+            case PacketType.ChangedObjectMove:
                 if (data) {
                     if (this.character.getSelfObjectId() !== data.objectId) {
                         console.log(`오브젝트(${data.objectId}) 움직임 감지`);

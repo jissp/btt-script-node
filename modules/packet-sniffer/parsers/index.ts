@@ -1,2 +1,2 @@
 export * from './parser.interface';
-export * from './character-status-update.parser'
+export * from './updated-character-status.parser'

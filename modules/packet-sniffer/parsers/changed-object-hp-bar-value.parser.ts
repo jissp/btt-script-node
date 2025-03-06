@@ -6,11 +6,11 @@ import { toLittleEndianHex } from '../domains/to-little-endian-hex';
  *
  * 544f5a2025000000a44601000025000000  98ac25cfffffffff0098ac25cf01000000810100 802f00000000 [length[2byte]] 000000 [ObjectId[4byte]] 00 02361a00 00 02f87500 00
  */
-export class ChangedObjectHpBarParser implements IPacketParser {
+export class ChangedObjectHpBarValueParser implements IPacketParser {
     private delimiter = '98ac25cfffffffff0098ac25cf01000000810100';
 
     parse(packet: string): ParsedPacket<ChangedObjectHpBar> {
-        const [, packet2] = packet.split(PacketPattern.체력바);
+        const [, packet2] = packet.split(PacketPattern.ChangedObjectHpBarValue);
         const packet3 = packet2.slice(this.delimiter.length, packet2.length);
 
         const objectId = this.extractObjectId(packet3);
@@ -18,7 +18,7 @@ export class ChangedObjectHpBarParser implements IPacketParser {
         const maxHpBar = this.extractHpBarMaxValue(packet3);
 
         return {
-            type: PacketType.체력바,
+            type: PacketType.ChangedObjectHpBarValue,
             data: {
                 objectId,
                 currentHpBar,

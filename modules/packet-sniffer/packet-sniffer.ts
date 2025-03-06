@@ -63,38 +63,26 @@ export class PacketSniffer {
 
         while (true) {
             try {
-                if (this.variableQueue.length === 0) {
+                const capturedData = this.variableQueue.shift();
+                const capturedDataLines = capturedData?.split('\n');
+                if (!capturedDataLines?.length) {
                     continue;
                 }
 
-                const capturedData = await this.variableQueue.shift();
-                if (!capturedData) {
-                    continue;
-                }
-
-                const capturedDataLines = capturedData.split('\n');
-                if (capturedDataLines.length === 0) {
-                    continue;
-                }
-
-                const capturedDataInfos = this.transformToDataInfoList(capturedDataLines);
-
-                for (const [address, dataFragment] of capturedDataInfos) {
+                const separatedLines = this.splitCaptureDataFromLines(capturedDataLines);
+                for (const [address, dataFragment] of separatedLines) {
                     if (this.isFirstAddress(address)) {
                         // 첫 시작이라면 지금까지 쌓여있던 패킷을 처리한다.
                         if (bucket.length) {
-                            const packet = this.reAssemblyDataFromBucket(bucket);
+                            const packet = this.reAssemblyPacketFromBucket(bucket);
 
-                            // 데이터 추출
+                            // 패킷에서 데이터 부분만 추출
                             const customFragments = this.splitPacketData(
                                 lastCustomFragment + packet.slice(52, packet.length),
                             );
 
-                            // 이 이유는... fragment의 마지막을 구분할 수가 없음...
-                            // 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
+                            // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
                             lastCustomFragment = customFragments[customFragments.length - 1];
-
-                            //
                             await this.parseAndSendFragments(customFragments);
 
                             bucket.length = 0;
@@ -130,13 +118,13 @@ export class PacketSniffer {
         return address.includes('0x0000');
     }
 
-    private transformToDataInfoList(capturedDataLines: string[]) {
+    private splitCaptureDataFromLines(capturedDataLines: string[]) {
         return capturedDataLines
             .filter(dumpLine => dumpLine.includes('0x'))
             .map(line => line.replace(/ /g, '').trim().split(':'));
     }
 
-    private reAssemblyDataFromBucket(packetStorages: string[]) {
+    private reAssemblyPacketFromBucket(packetStorages: string[]) {
         return packetStorages.join('');
     }
 

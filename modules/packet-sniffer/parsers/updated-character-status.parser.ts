@@ -1,14 +1,14 @@
 import { CharacterStatusUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
-export class CharacterStatusUpdateParser implements IPacketParser {
+export class UpdatedCharacterStatusParser implements IPacketParser {
     private readonly statusKeys: (keyof CharacterStatusUpdate)[] = ['m', 'g', 'h', 'mh', 'mm'];
     private readonly delimiterPattern = '0400(1[0-9a-f]|(0[1-9a-f]))0000';
     private readonly delimiterGlobalRegex = new RegExp(this.delimiterPattern, 'g');
     private readonly delimiterRegex = new RegExp(this.delimiterPattern);
 
     parse(packet: string): ParsedPacket<CharacterStatusUpdate> {
-        const [, packet2] = packet.split(PacketPattern.캐릭터상태업데이트);
+        const [, packet2] = packet.split(PacketPattern.UpdatedCharacterStatus);
 
         const delimiter = '00090e000000';
         const packet3 = packet2.slice(packet2.indexOf(delimiter) + delimiter.length, packet2.length);
@@ -44,7 +44,7 @@ export class CharacterStatusUpdateParser implements IPacketParser {
         }
 
         return {
-            type: PacketType.캐릭터상태업데이트,
+            type: PacketType.UpdatedCharacterStatus,
             data: result,
         };
     }

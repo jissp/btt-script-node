@@ -3,7 +3,7 @@ import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
 export class ChangedObjectMoveParser implements IPacketParser {
     parse(packet: string): ParsedPacket<ChangedObjectMove> {
-        const [, packet2] = packet.split(PacketPattern.ObjectMove);
+        const [, packet2] = packet.split(PacketPattern.ChangedObjectMove);
 
         const delimiter = '98ac25cfffffffff0098ac25cf01000000810100';
         const packet3 = packet2.slice(packet2.indexOf(delimiter) + delimiter.length, packet2.length);
@@ -11,7 +11,7 @@ export class ChangedObjectMoveParser implements IPacketParser {
         const objectId = this.extractObjectId(packet3);
 
         return {
-            type: PacketType.ObjectMove,
+            type: PacketType.ChangedObjectMove,
             data: {
                 objectId,
             },

@@ -2,9 +2,9 @@ import * as _ from 'lodash';
 import { CharacterStatusPartialUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
-export class CharacterStatusPartialUpdateParser implements IPacketParser {
+export class UpdatedPartialCharacterStatusParser implements IPacketParser {
     parse(packet: string): ParsedPacket<CharacterStatusPartialUpdate> {
-        const [, packet2] = packet.split(PacketPattern.체력마력자동회복);
+        const [, packet2] = packet.split(PacketPattern.UpdatedPartialCharacterStatus);
 
         const delimiter = '1700000002dbb61f00';
         const packet3 = packet2.slice(delimiter.length, packet2.length);
@@ -20,7 +20,7 @@ export class CharacterStatusPartialUpdateParser implements IPacketParser {
             });
 
         return {
-            type: PacketType.체력마력자동회복,
+            type: PacketType.UpdatedPartialCharacterStatus,
             data: Object.fromEntries(
                 _.chunk(
                     data.map(hex => Buffer.from(hex, 'hex').toString('ascii')),

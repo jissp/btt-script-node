@@ -1,19 +1,19 @@
 import { injectable } from 'tsyringe';
-import { CharacterStatusUpdateParser, IPacketParser, ParsedPacket } from './parsers';
+import { UpdatedCharacterStatusParser, IPacketParser, ParsedPacket } from './parsers';
 import { PacketPattern, PacketType } from './packet-sniffer.interface';
-import { CharacterStatusPartialUpdateParser } from './parsers/character-status-partial-update.parser';
-import { ChangedObjectHpBarParser } from './parsers/changed-object-hp-bar.parser';
+import { UpdatedPartialCharacterStatusParser } from './parsers/updated-partial-character-status.parser';
+import { ChangedObjectHpBarValueParser } from './parsers/changed-object-hp-bar-value.parser';
 import { ClientSelfLookParser } from './parsers/client-self-look.parser';
 import { ChangedObjectMoveParser } from './parsers/changed-object-move.parser';
 
 @injectable()
 export class PacketParser {
     private parsers: { [key in PacketType]?: IPacketParser } = {
-        [PacketType.캐릭터상태업데이트]: new CharacterStatusUpdateParser(),
-        [PacketType.체력마력자동회복]: new CharacterStatusPartialUpdateParser(),
-        [PacketType.체력바]: new ChangedObjectHpBarParser(),
-        [PacketType.P_ClientSelfLook]: new ClientSelfLookParser(),
-        [PacketType.ObjectMove]: new ChangedObjectMoveParser(),
+        [PacketType.UpdatedCharacterStatus]: new UpdatedCharacterStatusParser(),
+        [PacketType.UpdatedPartialCharacterStatus]: new UpdatedPartialCharacterStatusParser(),
+        [PacketType.ChangedObjectHpBarValue]: new ChangedObjectHpBarValueParser(),
+        [PacketType.ClientSelfLook]: new ClientSelfLookParser(),
+        [PacketType.ChangedObjectMove]: new ChangedObjectMoveParser(),
     };
 
     public parse(packet: string): ParsedPacket | null {
