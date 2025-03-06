@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import { UpdatedCharacterStatusParser, IPacketParser, ParsedPacket } from './parsers';
+import { IPacketParser, ParsedPacket, UpdatedCharacterStatusParser } from './parsers';
 import { PacketPattern, PacketType } from './packet-sniffer.interface';
 import { UpdatedPartialCharacterStatusParser } from './parsers/updated-partial-character-status.parser';
 import { ChangedObjectHpBarValueParser } from './parsers/changed-object-hp-bar-value.parser';
@@ -8,13 +8,15 @@ import { ChangedObjectMoveParser } from './parsers/changed-object-move.parser';
 
 @injectable()
 export class PacketParser {
-    private parsers: { [key in PacketType]?: IPacketParser } = {
-        [PacketType.UpdatedCharacterStatus]: new UpdatedCharacterStatusParser(),
-        [PacketType.UpdatedPartialCharacterStatus]: new UpdatedPartialCharacterStatusParser(),
-        [PacketType.ChangedObjectHpBarValue]: new ChangedObjectHpBarValueParser(),
-        [PacketType.ClientSelfLook]: new ClientSelfLookParser(),
-        [PacketType.ChangedObjectMove]: new ChangedObjectMoveParser(),
-    };
+    private parsers: Partial<Record<PacketType, IPacketParser>> = {};
+
+    constructor() {
+        this.parsers[PacketType.UpdatedCharacterStatus] = new UpdatedCharacterStatusParser();
+        this.parsers[PacketType.UpdatedPartialCharacterStatus] = new UpdatedPartialCharacterStatusParser();
+        this.parsers[PacketType.ChangedObjectHpBarValue] = new ChangedObjectHpBarValueParser();
+        this.parsers[PacketType.ClientSelfLook] = new ClientSelfLookParser();
+        this.parsers[PacketType.ChangedObjectMove] = new ChangedObjectMoveParser();
+    }
 
     public parse(packet: string): ParsedPacket | null {
         const packetType = this.extractPacketPattern(packet);
