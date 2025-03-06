@@ -5,7 +5,7 @@ import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
 import { Wntnftk } from '../modules/base-character-spell';
 import { CharacterFactory } from '../modules/character';
-import { PacketPattern } from '../modules/packet-consumer';
+import { PacketType } from '../modules/packet-consumer';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -23,7 +23,7 @@ export class HellfireSupport extends BaseScript {
     private freezeModeTimer: Timer;
     private itemCheckerTimer: Timer;
 
-    protected excludePacketPatterns = [PacketPattern.체력마력자동회복];
+    protected excludePacketPatterns = [PacketType.체력마력자동회복];
 
     constructor(
         @inject('ScriptName') protected readonly scriptName: string,
@@ -45,9 +45,7 @@ export class HellfireSupport extends BaseScript {
             await this.terminateIfNotRunning();
 
             if (await this.isActiveApp()) {
-                if (!(await this.isMode(SupportMode.None, true))) {
-                    await this.bttService.sendKey(BttKeyCode.s, Latency.KeyCode);
-                }
+                await this.bttService.sendKey(BttKeyCode.s, Latency.KeyCode);
             }
 
             await uSleep(100);
@@ -104,7 +102,8 @@ export class HellfireSupport extends BaseScript {
         }
 
         // 몬스터 찾기 전 체력이 부족한 경우 공격받는 중일 수 있음.
-        if (this.isEmptyHealth()) {
+        // if (this.isEmptyHealth()) {
+        if (this.detectedDecrementHpBarValue > 1) {
             await this.trySelfHeal();
             await this.trySafetyFreeze();
             await uSleep(100);

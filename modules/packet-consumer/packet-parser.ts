@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { CharacterStatusUpdateParser, ParsedPacket } from './parsers';
 import { CharacterStatusPartialUpdateParser } from './parsers/character-status-partial-update.parser';
-import { PacketPattern } from './packet-consumer.interface';
+import { PacketPattern, PacketType } from './packet-consumer.interface';
 import { ChangedObjectHpBarParser } from './parsers/changed-object-hp-bar.parser';
 import { ClientSelfLookParser } from './parsers/client-self-look.parser';
 import { ChangedObjectMoveParser } from './parsers/changed-object-move.parser';
@@ -24,27 +24,25 @@ export class PacketParser {
 
     public parse(packet: string): ParsedPacket | null {
         switch (this.extractPacketPattern(packet)) {
-            case PacketPattern.캐릭터상태업데이트:
+            case PacketType.캐릭터상태업데이트:
                 return this.characterStatusUpdateParser.parse(packet);
-            case PacketPattern.체력마력자동회복:
+            case PacketType.체력마력자동회복:
                 return this.characterStatusPartialUpdateParser.parse(packet);
-            case PacketPattern.체력바:
+            case PacketType.체력바:
                 return this.characterMonsterAttackParser.parse(packet);
-            case PacketPattern.P_ClientSelfLook:
+            case PacketType.P_ClientSelfLook:
                 return this.clientSelfLookParser.parse(packet);
-            case PacketPattern.ObjectMove:
+            case PacketType.ObjectMove:
                 return this.changedObjectMoveParser.parse(packet);
             default:
                 return null;
         }
     }
 
-    private extractPacketPattern(packet: string): PacketPattern | null {
-        const packetPatterns = Object.values(PacketPattern);
-
-        for (const packetPattern of packetPatterns) {
-            if (packet.includes(packetPattern)) {
-                return packetPattern as PacketPattern;
+    private extractPacketPattern(packet: string): PacketType | null {
+        for (const [type, pattern] of Object.entries(PacketPattern) as [keyof typeof PacketPattern, string][]) {
+            if (packet.includes(pattern)) {
+                return type;
             }
         }
 

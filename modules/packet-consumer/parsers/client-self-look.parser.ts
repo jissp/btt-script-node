@@ -1,5 +1,5 @@
-import { PacketParser, ParsedPacket } from './parser.interface';
-import { PacketPattern } from '../packet-consumer.interface';
+import { ClientSelfLook, PacketParser, ParsedPacket } from './parser.interface';
+import { PacketPattern, PacketType } from '../packet-consumer.interface';
 
 /**
  *
@@ -10,16 +10,18 @@ import { PacketPattern } from '../packet-consumer.interface';
  * 1200000000050000005469746c6504000000000000170000004974656d54696c65427945717569706d656e74547970650a030000000104000000000000000c00e09844000000000105000000000000000c00007243000000000106000000000000000c000072430000000000090000004d737755736572496404001100000032303337323130303030333930383732310007000000624d7973656c66070100080000004f626a656374496402eed7020000130000004974656d4e616d6542794571756970547970650a05000000010100000000000000040006000000ec9786ec9d8c01020000000000000004000f000000eb8f84eca088ec9d98eb8f84ed8fac01040000000000000004000c000000ec8ba0ec9ea5ed88aceab5ac01050000000000000004000c000000eca784eba788ebb098eca78001060000000000000004000c000000eca784eba788ebb098eca78000050000004d6178487002f87500000002000000416302c7ffffff00070000004c6567656e64730a02000000010100000000000000040019000000307c424c41434b7cec9ca0eba6ac20323330eb858420ec839d01020000000000000004003f000000377c424c41434b
  */
 export class ClientSelfLookParser implements PacketParser {
-    parse(packet: string): ParsedPacket {
+    private readonly delimiter = '98ac25cfffffffff0098ac25cf01000000810100';
+
+    parse(packet: string): ParsedPacket<ClientSelfLook> {
         const [, packet2] = packet.split(PacketPattern.P_ClientSelfLook);
-        const packet3 = packet2.slice('98ac25cfffffffff0098ac25cf01000000810100'.length, packet2.length);
+        const packet3 = packet2.slice(this.delimiter.length, packet2.length);
 
         const selfObjectId = this.extractObjectId(packet3);
 
         return {
-            type: PacketPattern.P_ClientSelfLook,
+            type: PacketType.P_ClientSelfLook,
             data: {
-                selfObjectId,
+                objectId: selfObjectId,
             },
         };
     }

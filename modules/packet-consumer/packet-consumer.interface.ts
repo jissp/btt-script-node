@@ -1,14 +1,27 @@
-export enum PacketPattern {
-    '캐릭터상태업데이트' = '000098ac25cfffffffff0098ac25cf01000000fc0000800200000000',
-    '체력마력자동회복' = '000098ac25cfffffffff0098ac25cf01000000fc0000800100000000',
-    '체력바' = '544f5a2025000000',
-    'P_ServerSpellUse' = '00000098ac25cfffffffff0098ac25cf0100000081010080120000000038000000160010000000',
-    '비영사천문' = '00000098ac25cfffffffff0098ac25cf01000000810100801200000000720',
-    'chatMessageUID' = '636861744d65737361676555494404',
-    'MeramItemSlotUpdated' = '4d6572616d4974656d536c6f74557064617465640b',
-    'P_ClientSelfLook' = '505f436c69656e7453656c664c6f6f6b',
-    ObjectMove = '544f5a202a000000',
+export enum PacketType {
+    '캐릭터상태업데이트' = '캐릭터상태업데이트',
+    '체력마력자동회복' = '체력마력자동회복',
+    '체력바' = '체력바',
+    'P_ClientSelfLook' = 'P_ClientSelfLook',
+    ObjectMove = 'ObjectMove',
+
+    'P_ServerSpellUse' = 'P_ServerSpellUse',
+    '비영사천문' = '비영사천문',
+    'chatMessageUID' = 'chatMessageUID',
+    'MeramItemSlotUpdated' = 'MeramItemSlotUpdated',
 }
+
+export const PacketPattern: { [key in PacketType]: string } = {
+    [PacketType['캐릭터상태업데이트']]: '000098ac25cfffffffff0098ac25cf01000000fc0000800200000000',
+    [PacketType['체력마력자동회복']]: '000098ac25cfffffffff0098ac25cf01000000fc0000800100000000',
+    [PacketType['체력바']]: '544f5a2025000000',
+    [PacketType['P_ServerSpellUse']]: '00000098ac25cfffffffff0098ac25cf0100000081010080120000000038000000160010000000',
+    [PacketType['비영사천문']]: '00000098ac25cfffffffff0098ac25cf01000000810100801200000000720',
+    [PacketType['chatMessageUID']]: '636861744d65737361676555494404',
+    [PacketType['MeramItemSlotUpdated']]: '4d6572616d4974656d536c6f74557064617465640b',
+    [PacketType['P_ClientSelfLook']]: '505f436c69656e7453656c664c6f6f6b',
+    [PacketType['ObjectMove']]: '544f5a202a000000',
+};
 
 export enum UnknownPattern {
     '/m /m' = '09000000ffffffff0009000000079caf6dffffffff',

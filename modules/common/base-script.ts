@@ -8,7 +8,7 @@ import { ocrByClipboard, screenCapture } from './externals';
 import { BttKeyCode, BttService, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
-import { PacketConsumer, PacketPattern, ParsedPacket } from '../packet-consumer';
+import { PacketConsumer, PacketType, ParsedPacket } from '../packet-consumer';
 import { Character } from '../character';
 import { PacketParser } from '../packet-consumer/packet-parser';
 
@@ -30,8 +30,9 @@ export abstract class BaseScript {
 
     protected defensiveTimer: Timer;
 
-    protected excludePacketPatterns: PacketPattern[] = [];
+    protected excludePacketPatterns: PacketType[] = [];
     protected latestDetectedMoveTimestamp: number = 0;
+    protected detectedDecrementHpBarValue: number = 0;
 
     protected constructor(character: Character) {
         this.character = character;
@@ -102,8 +103,8 @@ export abstract class BaseScript {
         }
 
         switch (type) {
-            case PacketPattern.캐릭터상태업데이트:
-            case PacketPattern.체력마력자동회복:
+            case PacketType.캐릭터상태업데이트:
+            case PacketType.체력마력자동회복:
                 try {
                     const packetDataKeys = Object.keys(data);
 
@@ -120,19 +121,31 @@ export abstract class BaseScript {
                     }
                 } catch (error) {}
                 break;
-            case PacketPattern.체력바:
+            case PacketType.체력바:
                 if (data) {
                     if (this.character.getSelfObjectId() === data.objectId) {
+                        const currentHpBar = this.character.getHpBarValue();
                         this.character.setHpBarValue(data.currentHpBar);
+
+                        if (currentHpBar >= data.currentHpBar && data.currentHpBar != data.maxHpBar) {
+                            this.detectedDecrementHpBarValue++;
+
+                            if (this.detectedDecrementHpBarValue > 1) {
+                                console.log('피격 감지');
+                            }
+                        } else {
+                            console.log(`${currentHpBar} <= ${data.currentHpBar}`);
+                            this.detectedDecrementHpBarValue = 0;
+                        }
                     }
                 }
                 break;
-            case PacketPattern.P_ClientSelfLook:
+            case PacketType.P_ClientSelfLook:
                 if (data) {
-                    this.character.setSelfObjectId(data.selfObjectId);
+                    this.character.setSelfObjectId(data.objectId);
                 }
                 break;
-            case PacketPattern.ObjectMove:
+            case PacketType.ObjectMove:
                 if (data) {
                     if (this.character.getSelfObjectId() !== data.objectId) {
                         console.log('오브젝트 움직임 감지');

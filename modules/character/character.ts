@@ -10,6 +10,7 @@ export class Character<Spell = BaseCharacterSpell> {
     private readonly bttService: BttService;
 
     private selfObjectId?: string;
+    private beforeHealth: number = 0;
     private health: number = 0;
     private mana: number = 0;
     private maxMana: number = 0;
@@ -34,7 +35,11 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     updateHealth(point: number) {
-        console.log('updateHealth', point);
+        if (this.health !== point) {
+            console.log('updateHealth', point);
+        }
+
+        this.beforeHealth = this.health;
         this.health = point;
     }
 
@@ -43,12 +48,13 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     updateMana(point: number) {
-        console.log('updateMana', point);
+        if (this.mana !== point) {
+            console.log('updateMana', point);
+        }
         this.mana = point;
     }
 
     getMana() {
-        console.log('getMana', this.mana);
         return this.mana;
     }
 
@@ -67,10 +73,6 @@ export class Character<Spell = BaseCharacterSpell> {
 
     getHpBarValue() {
         return this.hpBarValue;
-    }
-
-    isHitByMonster() {
-        return this.beforeHpBarValue > this.hpBarValue;
     }
 
     async getCurrentCoordinate(): Promise<Coord> {
