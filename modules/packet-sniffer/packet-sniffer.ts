@@ -100,16 +100,15 @@ export class PacketSniffer {
 
     private async parseAndSendFragments(customFragments: string[]) {
         for (const fragment of customFragments) {
+            // 불필요한 패킷은 제외한다.
             if (excludePatterns.some(pattern => fragment.includes(pattern))) {
                 continue;
             }
 
             const parsedPacket = this.parser.parse(fragment);
-            if (!parsedPacket) {
-                continue;
+            if (parsedPacket) {
+                this.eventEmitter.emit(PacketSnifferEvent.ReceiveParsedPacket, parsedPacket);
             }
-
-            this.eventEmitter.emit(PacketSnifferEvent.ReceiveParsedPacket, parsedPacket);
         }
     }
 
