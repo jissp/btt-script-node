@@ -112,7 +112,7 @@ export abstract class BaseScript {
         const { type, data } = packet;
 
         // 상속받은 클래스에서 제외할 패킷 타입이면 무시
-        if (this.excludePacketPatterns.includes(packet.type)) {
+        if (this.excludePacketPatterns.includes(type)) {
             return;
         }
 
