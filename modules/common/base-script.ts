@@ -70,7 +70,7 @@ export abstract class BaseScript {
         await this.defensiveTimer.init();
 
         this.eventEmitter.on(PacketSnifferEvent.ReceiveParsedPacket, (packet: ParsedPacket) =>
-            this.receivePacket(packet),
+            this.handleReceivePacket(packet),
         );
         this.packetSniffer.run();
         await this.initialized();
@@ -106,7 +106,7 @@ export abstract class BaseScript {
         }
     }
 
-    private async receivePacket(packet: ParsedPacket) {
+    private async handleReceivePacket(packet: ParsedPacket) {
         await this.terminateIfNotRunning();
 
         const { type, data } = packet;
