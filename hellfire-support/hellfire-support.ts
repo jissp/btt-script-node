@@ -307,12 +307,4 @@ export class HellfireSupport extends BaseScript {
 
         return currentTimestamp - this.latestDetectedOtherObjectMoveTimestamp < 1000;
     }
-
-    private isDetectCharacterHit() {
-        return this.detectedDecrementHpBarValue > 1;
-    }
-
-    private unSetDetectCharacterHit() {
-        this.detectedDecrementHpBarValue = 0;
-    }
 }

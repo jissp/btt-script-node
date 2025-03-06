@@ -59,7 +59,7 @@ export class Character<Spell = BaseCharacterSpell> {
         return this.maxMana;
     }
 
-    setHpBarValue(value: number) {
+    updateHpBarValue(value: number) {
         this.beforeHpBarValue = this.hpBarValue;
         this.hpBarValue = value;
     }

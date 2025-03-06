@@ -21,8 +21,8 @@ export class ChangedObjectHpBarValueParser implements IPacketParser {
             type: PacketType.ChangedObjectHpBarValue,
             data: {
                 objectId,
-                currentHpBar,
-                maxHpBar,
+                hpBarValue: currentHpBar,
+                maxHpBarValue: maxHpBar,
             },
         };
     }

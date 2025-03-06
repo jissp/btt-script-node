@@ -9,7 +9,16 @@ import { ocrByClipboard, screenCapture } from './externals';
 import { BttKeyCode, BttService, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
-import { PacketParser, PacketSniffer, PacketSnifferEvent, PacketType, ParsedPacket } from '../packet-sniffer';
+import {
+    ChangedObjectHpBar,
+    ChangedObjectMove,
+    ClientSelfLook,
+    PacketParser,
+    PacketSniffer,
+    PacketSnifferEvent,
+    PacketType,
+    ParsedPacket,
+} from '../packet-sniffer';
 import { Character } from '../character';
 
 export abstract class BaseScript {
@@ -61,7 +70,7 @@ export abstract class BaseScript {
         await this.defensiveTimer.init();
 
         this.eventEmitter.on(PacketSnifferEvent.ReceiveParsedPacket, (packet: ParsedPacket) =>
-            this.callbackForPacket(packet),
+            this.receivePacket(packet),
         );
         this.packetSniffer.run();
         await this.initialized();
@@ -97,11 +106,12 @@ export abstract class BaseScript {
         }
     }
 
-    private async callbackForPacket(packet: ParsedPacket) {
+    private async receivePacket(packet: ParsedPacket) {
         await this.terminateIfNotRunning();
 
         const { type, data } = packet;
 
+        // 상속받은 클래스에서 제외할 패킷 타입이면 무시
         if (this.excludePacketPatterns.includes(packet.type)) {
             return;
         }
@@ -109,48 +119,49 @@ export abstract class BaseScript {
         switch (type) {
             case PacketType.UpdatedCharacterStatus:
             case PacketType.UpdatedPartialCharacterStatus:
-                try {
-                    const packetDataKeys = Object.keys(data);
+                const packetDataKeys = Object.keys(data);
 
-                    if (packetDataKeys.includes('h')) {
-                        this.character.updateHealth(Number(data.h));
-                    }
+                if (packetDataKeys.includes('h')) {
+                    this.character.updateHealth(Number(data.h));
+                }
 
-                    if (packetDataKeys.includes('m')) {
-                        this.character.updateMana(Number(data.m));
-                    }
+                if (packetDataKeys.includes('m')) {
+                    this.character.updateMana(Number(data.m));
+                }
 
-                    if (packetDataKeys.includes('mm')) {
-                        this.character.updateMaxMana(Number(data.mm));
-                    }
-                } catch (error) {}
+                if (packetDataKeys.includes('mm')) {
+                    this.character.updateMaxMana(Number(data.mm));
+                }
                 break;
             case PacketType.ChangedObjectHpBarValue:
-                if (data) {
-                    if (this.character.getSelfObjectId() === data.objectId) {
-                        const currentHpBar = this.character.getHpBarValue();
-                        this.character.setHpBarValue(data.currentHpBar);
+                {
+                    const { objectId, hpBarValue, maxHpBarValue } = data as ChangedObjectHpBar;
+                    if (this.character.getSelfObjectId() === objectId) {
+                        const beforeHpBarValue = this.character.getHpBarValue();
+                        this.character.updateHpBarValue(hpBarValue);
 
-                        if (currentHpBar >= data.currentHpBar && data.currentHpBar != data.maxHpBar) {
+                        if (hpBarValue < beforeHpBarValue && hpBarValue != maxHpBarValue) {
                             this.detectedDecrementHpBarValue++;
 
-                            if (this.detectedDecrementHpBarValue > 1) {
+                            if (this.isDetectCharacterHit()) {
                                 console.log('캐릭터 피격 감지');
                             }
                         } else {
-                            this.detectedDecrementHpBarValue = 0;
+                            this.unSetDetectCharacterHit();
                         }
                     }
                 }
                 break;
             case PacketType.ClientSelfLook:
-                if (data) {
-                    this.character.setSelfObjectId(data.objectId);
+                {
+                    const { objectId } = data as ClientSelfLook;
+                    this.character.setSelfObjectId(objectId);
                 }
                 break;
             case PacketType.ChangedObjectMove:
-                if (data) {
-                    if (this.character.getSelfObjectId() !== data.objectId) {
+                {
+                    const { objectId } = data as ChangedObjectMove;
+                    if (this.character.getSelfObjectId() !== objectId) {
                         console.log(`오브젝트(${data.objectId}) 움직임 감지`);
                         this.latestDetectedOtherObjectMoveTimestamp = Date.now();
                     }
@@ -370,5 +381,13 @@ export abstract class BaseScript {
         }
 
         return [matches[1], Number(matches[2])];
+    }
+
+    protected isDetectCharacterHit() {
+        return this.detectedDecrementHpBarValue > 1;
+    }
+
+    protected unSetDetectCharacterHit() {
+        this.detectedDecrementHpBarValue = 0;
     }
 }

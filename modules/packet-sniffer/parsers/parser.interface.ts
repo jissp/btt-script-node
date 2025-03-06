@@ -14,8 +14,8 @@ export type RecordObjectId = {
 };
 
 export type ChangedObjectHpBar = RecordObjectId & {
-    currentHpBar: number;
-    maxHpBar: number;
+    hpBarValue: number;
+    maxHpBarValue: number;
 };
 
 export type ChangedObjectMove = RecordObjectId;
