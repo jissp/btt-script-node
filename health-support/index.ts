@@ -1,10 +1,12 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { HealthSupport } from './health-support';
+import { EventEmitter } from 'events';
 
 async function main() {
     console.log('start');
     container.register<string>('ScriptName', { useValue: 'health-support' });
+    container.registerInstance<EventEmitter>(EventEmitter, new EventEmitter());
 
     const script = container.resolve<HealthSupport>(HealthSupport);
     await script.init();

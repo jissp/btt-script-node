@@ -1,12 +1,12 @@
-import { ChangedObjectHpBar, PacketParser, ParsedPacket } from './parser.interface';
-import { PacketPattern, PacketType } from '../packet-consumer.interface';
+import { ChangedObjectHpBar, IPacketParser, ParsedPacket } from './parser.interface';
+import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 import { toLittleEndianHex } from '../domains/to-little-endian-hex';
 
 /**
  *
  * 544f5a2025000000a44601000025000000  98ac25cfffffffff0098ac25cf01000000810100 802f00000000 [length[2byte]] 000000 [ObjectId[4byte]] 00 02361a00 00 02f87500 00
  */
-export class ChangedObjectHpBarParser implements PacketParser {
+export class ChangedObjectHpBarParser implements IPacketParser {
     private delimiter = '98ac25cfffffffff0098ac25cf01000000810100';
 
     parse(packet: string): ParsedPacket<ChangedObjectHpBar> {

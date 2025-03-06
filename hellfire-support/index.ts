@@ -1,10 +1,12 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import { EventEmitter } from 'events';
 import { HellfireSupport } from './hellfire-support';
 
 async function main() {
     console.log('start');
     container.register<string>('ScriptName', { useValue: 'hellfire-support' });
+    container.registerInstance<EventEmitter>(EventEmitter, new EventEmitter());
     const support = container.resolve<HellfireSupport>(HellfireSupport);
     await support.init();
 

@@ -1,6 +1,6 @@
-import { PacketType } from '../packet-consumer.interface';
+import { PacketType } from '../packet-sniffer.interface';
 
-export interface PacketParser<T = any> {
+export interface IPacketParser<T = any> {
     parse(packet: string): ParsedPacket<T>;
 }
 

@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import { container } from 'tsyringe';
+import { EventEmitter } from 'events';
 import { uSleep } from '../utils';
 import { GameRect, Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
@@ -8,9 +9,8 @@ import { ocrByClipboard, screenCapture } from './externals';
 import { BttKeyCode, BttService, ImageSearchRegion } from '../btt-client';
 import { BttStorage } from '../storage';
 import { Timer, TimerFactory } from '../timer';
-import { PacketConsumer, PacketType, ParsedPacket } from '../packet-consumer';
+import { PacketParser, PacketSniffer, PacketSnifferEvent, PacketType, ParsedPacket } from '../packet-sniffer';
 import { Character } from '../character';
-import { PacketParser } from '../packet-consumer/packet-parser';
 
 export abstract class BaseScript {
     protected readonly character: Character;
@@ -20,9 +20,10 @@ export abstract class BaseScript {
     protected readonly bttService: BttService;
     protected readonly localStorage: LocalStorage;
     protected readonly bttStorage: BttStorage;
-    protected readonly packetConsumer: PacketConsumer;
     protected readonly packetParser: PacketParser;
     protected readonly timerFactory: TimerFactory;
+    protected readonly packetSniffer: PacketSniffer;
+    protected readonly eventEmitter: EventEmitter;
 
     protected abstract readonly scriptName: string;
     private readonly scriptStartedTimestamp: number;
@@ -42,8 +43,9 @@ export abstract class BaseScript {
         this.bttStorage = container.resolve(BttStorage);
         this.bttService = container.resolve(BttService);
         this.timerFactory = container.resolve(TimerFactory);
-        this.packetConsumer = container.resolve(PacketConsumer);
         this.packetParser = container.resolve(PacketParser);
+        this.packetSniffer = container.resolve(PacketSniffer);
+        this.eventEmitter = container.resolve(EventEmitter);
 
         this.scriptStartedTimestamp = new Date().getTime();
 
@@ -58,8 +60,10 @@ export abstract class BaseScript {
 
         await this.defensiveTimer.init();
 
-        this.packetConsumer.process((packet: ParsedPacket) => this.callbackForPacket(packet));
-
+        this.eventEmitter.on(PacketSnifferEvent.ReceiveParsedPacket, (packet: ParsedPacket) =>
+            this.callbackForPacket(packet),
+        );
+        this.packetSniffer.run();
         await this.initialized();
     }
 
@@ -206,7 +210,6 @@ export abstract class BaseScript {
 
     public async terminateIfNotRunning() {
         if (!(await this.isRunning())) {
-            this.packetConsumer.terminate();
             throw new TerminateException('Main loop terminated');
         }
     }

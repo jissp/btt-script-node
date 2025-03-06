@@ -1,7 +1,7 @@
-import { ChangedObjectMove, PacketParser, ParsedPacket } from './parser.interface';
-import { PacketPattern, PacketType } from '../packet-consumer.interface';
+import { ChangedObjectMove, IPacketParser, ParsedPacket } from './parser.interface';
+import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
-export class ChangedObjectMoveParser implements PacketParser {
+export class ChangedObjectMoveParser implements IPacketParser {
     parse(packet: string): ParsedPacket<ChangedObjectMove> {
         const [, packet2] = packet.split(PacketPattern.ObjectMove);
 

@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
-import { CharacterStatusPartialUpdate, PacketParser, ParsedPacket } from './parser.interface';
-import { PacketPattern, PacketType } from '../packet-consumer.interface';
+import { CharacterStatusPartialUpdate, IPacketParser, ParsedPacket } from './parser.interface';
+import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
-export class CharacterStatusPartialUpdateParser implements PacketParser {
+export class CharacterStatusPartialUpdateParser implements IPacketParser {
     parse(packet: string): ParsedPacket<CharacterStatusPartialUpdate> {
         const [, packet2] = packet.split(PacketPattern.체력마력자동회복);
 

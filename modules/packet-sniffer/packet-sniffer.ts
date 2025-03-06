@@ -1,34 +1,74 @@
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { inject, injectable } from 'tsyringe';
-import Redis from 'ioredis';
+import { EventEmitter } from 'events';
 import { uSleep } from '../utils';
+import { excludePatterns } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
-import { ParsedPacket } from './parsers';
-import { excludePatterns } from './packet-consumer.interface';
+import { PacketSnifferEvent } from './packet-sniffer.event';
 
 @injectable()
-export class PacketConsumer {
-    private packetQueueKey = 'packet_data';
-    private client: Redis;
-    private isRunning: boolean = false;
+export class PacketSniffer {
+    private tcpdumpProcess?: ChildProcessWithoutNullStreams;
 
-    constructor(@inject(PacketParser) private readonly parser: PacketParser) {
-        this.client = new Redis({
-            host: 'localhost',
-            port: 16379,
-        });
+    private variableQueue: string[] = [];
 
-        this.isRunning = true;
+    constructor(
+        @inject(EventEmitter) private readonly eventEmitter: EventEmitter,
+        @inject(PacketParser) private readonly parser: PacketParser,
+    ) {}
+
+    public async run() {
+        this.runTcpDump();
+
+        // 비동기로 데이터를 처리하기 위해 await 없이 호출
+        this.consumeVariableQueue();
     }
 
-    public async process(callback: (packet: ParsedPacket) => Promise<void>) {
-        // 초기화 하고 시작
-        await this.client.del(this.packetQueueKey);
+    private runTcpDump() {
+        this.tcpdumpProcess = spawn('sudo', [
+            'sudo',
+            'tcpdump',
+            '-i',
+            'en0',
+            '-l',
+            '-s 0',
+            '-x',
+            '-n',
+            'src port 32800',
+        ]);
 
+        this.tcpdumpProcess.stdout.on('data', packet => this.processTcpDumpPacket.call(this, packet));
+        this.bindProcessTerminationForProcessKill();
+    }
+
+    private bindProcessTerminationForProcessKill() {
+        // Node.js가 종료될 때 tcpdump 종료시킨다.
+        process.on('SIGINT', () => {
+            this.tcpdumpProcess?.kill();
+            process.exit();
+        });
+
+        process.on('exit', () => {
+            this.tcpdumpProcess?.kill();
+        });
+    }
+
+    private processTcpDumpPacket(packet: string) {
+        const data = Buffer.from(packet, 'hex').toString('ascii');
+        this.variableQueue.push(data);
+    }
+
+    private async consumeVariableQueue() {
         let lastCustomFragment = '';
         const bucket: string[] = [];
-        while (this.isRunning) {
+
+        while (true) {
             try {
-                const capturedData = await this.client.lpop(this.packetQueueKey);
+                if (this.variableQueue.length === 0) {
+                    continue;
+                }
+
+                const capturedData = await this.variableQueue.shift();
                 if (!capturedData) {
                     continue;
                 }
@@ -56,7 +96,7 @@ export class PacketConsumer {
                             lastCustomFragment = customFragments[customFragments.length - 1];
 
                             //
-                            await this.parseAndSendFragments(customFragments, callback);
+                            await this.parseAndSendFragments(customFragments);
 
                             bucket.length = 0;
                         }
@@ -65,21 +105,16 @@ export class PacketConsumer {
                     bucket.push(dataFragment);
                 }
             } catch (error) {
-                this.client.disconnect();
-                return;
+                console.log(error);
             } finally {
-                await uSleep(20);
+                await uSleep(50);
             }
         }
     }
 
-    public terminate() {
-        this.isRunning = false;
-    }
-
-    private async parseAndSendFragments(customFragments: string[], callback: (packet: ParsedPacket) => Promise<void>) {
+    private async parseAndSendFragments(customFragments: string[]) {
         for (const fragment of customFragments) {
-            if(excludePatterns.some(pattern => fragment.includes(pattern))) {
+            if (excludePatterns.some(pattern => fragment.includes(pattern))) {
                 continue;
             }
 
@@ -88,7 +123,7 @@ export class PacketConsumer {
                 continue;
             }
 
-            await callback(parsedPacket);
+            this.eventEmitter.emit(PacketSnifferEvent.ReceiveParsedPacket, parsedPacket);
         }
     }
 

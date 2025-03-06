@@ -5,7 +5,7 @@ import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
 import { Wntnftk } from '../modules/base-character-spell';
 import { CharacterFactory } from '../modules/character';
-import { PacketType } from '../modules/packet-consumer';
+import { PacketType } from '../modules/packet-sniffer';
 
 enum SupportMode {
     HellFire = 'hellfire',

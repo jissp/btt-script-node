@@ -1,10 +1,7 @@
-import { CharacterStatusUpdate, PacketParser, ParsedPacket } from './parser.interface';
-import { PacketPattern, PacketType } from '../packet-consumer.interface';
+import { CharacterStatusUpdate, IPacketParser, ParsedPacket } from './parser.interface';
+import { PacketPattern, PacketType } from '../packet-sniffer.interface';
 
-/**
- * 544f5a202c00000077360000002c00000098ac25cfffffffff0098ac25cf01000000fc00008001000000001600000002668808000400010000006804000400000032313035
- */
-export class CharacterStatusUpdateParser implements PacketParser {
+export class CharacterStatusUpdateParser implements IPacketParser {
     private readonly statusKeys: (keyof CharacterStatusUpdate)[] = ['m', 'g', 'h', 'mh', 'mm'];
     private readonly delimiterPattern = '0400(1[0-9a-f]|(0[1-9a-f]))0000';
     private readonly delimiterGlobalRegex = new RegExp(this.delimiterPattern, 'g');
