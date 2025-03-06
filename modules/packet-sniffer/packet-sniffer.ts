@@ -38,7 +38,9 @@ export class PacketSniffer {
             'src port 32800',
         ]);
 
-        this.tcpdumpProcess.stdout.on('data', packet => this.processTcpDumpPacket.call(this, packet));
+        this.tcpdumpProcess.stdout.on('data', packet => {
+            this.variableQueue.push(castEncoding(packet, 'hex', 'ascii'));
+        });
         this.bindProcessTerminationForProcessKill();
     }
 
@@ -52,10 +54,6 @@ export class PacketSniffer {
         process.on('exit', () => {
             this.tcpdumpProcess?.kill();
         });
-    }
-
-    private processTcpDumpPacket(packet: string) {
-        this.variableQueue.push(castEncoding(packet, 'hex', 'ascii'));
     }
 
     private async consumeVariableQueue() {
