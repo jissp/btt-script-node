@@ -1,5 +1,6 @@
 import { CharacterStatusUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
+import { castEncoding } from '../domains';
 
 export class UpdatedCharacterStatusParser implements IPacketParser {
     private readonly statusKeys: (keyof CharacterStatusUpdate)[] = ['m', 'g', 'h', 'mh', 'mm'];
@@ -24,7 +25,7 @@ export class UpdatedCharacterStatusParser implements IPacketParser {
 
                 return d.slice(12, 12 + length * 2);
             })
-            .map(hex => Buffer.from(hex, 'hex').toString('ascii'));
+            .map(hex => castEncoding(hex, 'hex', 'ascii'));
 
         const result = this.statusKeys.reduce((previousValue, currentValue) => {
             const indexOf = data.indexOf(currentValue);

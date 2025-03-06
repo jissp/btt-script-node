@@ -1,5 +1,6 @@
 import { ClientSelfLook, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
+import { castEncoding } from '../domains';
 
 export class ClientSelfLookParser implements IPacketParser {
     private readonly delimiter = '98ac25cfffffffff0098ac25cf01000000810100';
@@ -19,7 +20,7 @@ export class ClientSelfLookParser implements IPacketParser {
     }
 
     private extractObjectId(packet: string): string {
-        const hexByObjectId = Buffer.from('ObjectId', 'ascii').toString('hex');
+        const hexByObjectId = castEncoding('ObjectId', 'ascii', 'hex');
         const startedIndex = packet.indexOf(hexByObjectId) + hexByObjectId.length;
         return packet.slice(startedIndex, startedIndex + 8);
     }

@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import { CharacterStatusPartialUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
+import { castEncoding } from '../domains';
 
 export class UpdatedPartialCharacterStatusParser implements IPacketParser {
     parse(packet: string): ParsedPacket<CharacterStatusPartialUpdate> {
@@ -23,7 +24,7 @@ export class UpdatedPartialCharacterStatusParser implements IPacketParser {
             type: PacketType.UpdatedPartialCharacterStatus,
             data: Object.fromEntries(
                 _.chunk(
-                    data.map(hex => Buffer.from(hex, 'hex').toString('ascii')),
+                    data.map(hex => castEncoding(hex, 'hex', 'ascii')),
                     2,
                 ),
             ),

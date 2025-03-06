@@ -5,6 +5,7 @@ import { uSleep } from '../utils';
 import { excludePatterns } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
+import { castEncoding } from './domains';
 
 @injectable()
 export class PacketSniffer {
@@ -54,7 +55,7 @@ export class PacketSniffer {
     }
 
     private processTcpDumpPacket(packet: string) {
-        this.variableQueue.push(Buffer.from(packet, 'hex').toString('ascii'));
+        this.variableQueue.push(castEncoding(packet, 'hex', 'ascii'));
     }
 
     private async consumeVariableQueue() {
