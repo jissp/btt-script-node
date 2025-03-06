@@ -1,10 +1,14 @@
 import { injectable } from 'tsyringe';
-import { IPacketParser, ParsedPacket, UpdatedCharacterStatusParser } from './parsers';
 import { PacketPattern, PacketType } from './packet-sniffer.interface';
-import { UpdatedPartialCharacterStatusParser } from './parsers/updated-partial-character-status.parser';
-import { ChangedObjectHpBarValueParser } from './parsers/changed-object-hp-bar-value.parser';
-import { ClientSelfLookParser } from './parsers/client-self-look.parser';
-import { ChangedObjectMoveParser } from './parsers/changed-object-move.parser';
+import {
+    ChangedObjectHpBarValueParser,
+    ChangedObjectMoveParser,
+    ClientSelfLookParser,
+    IPacketParser,
+    ParsedPacket,
+    UpdatedCharacterStatusParser,
+    UpdatedPartialCharacterStatusParser,
+} from './parsers';
 
 @injectable()
 export class PacketParser {
@@ -19,21 +23,22 @@ export class PacketParser {
     }
 
     public parse(packet: string): ParsedPacket | null {
-        const packetType = this.extractPacketPattern(packet);
-        if (!packetType) {
+        try {
+            const packetType = this.extractPacketPattern(packet);
+
+            return this.parsers[packetType]?.parse(packet) ?? null;
+        } catch (error) {
             return null;
         }
-
-        return this.parsers[packetType]?.parse(packet) ?? null;
     }
 
-    private extractPacketPattern(packet: string): PacketType | null {
+    private extractPacketPattern(packet: string): PacketType {
         for (const [type, pattern] of Object.entries(PacketPattern) as [keyof typeof PacketPattern, string][]) {
             if (packet.includes(pattern)) {
                 return type;
             }
         }
 
-        return null;
+        throw new Error('Unknown packet type');
     }
 }

@@ -19,13 +19,13 @@ export class PacketSniffer {
     ) {}
 
     public async run() {
-        this.runTcpDump();
+        this.executeTcpDump();
 
         // 비동기로 데이터를 처리하기 위해 await 없이 호출
         this.consumeVariableQueue();
     }
 
-    private runTcpDump() {
+    private executeTcpDump() {
         this.tcpdumpProcess = spawn('sudo', [
             'sudo',
             'tcpdump',
