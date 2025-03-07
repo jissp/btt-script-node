@@ -6,6 +6,7 @@ import { excludePatterns, TcpHeader } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
 import { castEncoding, toLittleEndianHex } from './domains';
+import { debugLog } from '../utils/debug-log';
 
 @injectable()
 export class PacketSniffer {
@@ -112,6 +113,8 @@ export class PacketSniffer {
             if (excludePatterns.some(pattern => fragment.includes(pattern))) {
                 continue;
             }
+
+            debugLog('fragment', fragment);
 
             const parsedPacket = this.parser.parse(fragment);
             if (parsedPacket) {
