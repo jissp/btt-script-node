@@ -83,7 +83,7 @@ export class PacketSniffer {
                         const tcpHeader = this.extractTcpHeader(packet);
                         debugLog('tcpHeader', tcpHeader);
                         if(tcpHeader) {
-                            if(tcpHeader.sequenceNumber <= lastSequenceNumber) {
+                            if(tcpHeader.sequenceNumber < lastSequenceNumber) {
                                 bucket.length = 0;
                                 continue;
                             }
