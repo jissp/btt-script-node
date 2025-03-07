@@ -215,6 +215,7 @@ export class HellfireSupport extends BaseScript {
 
                 // 마나회복용 아이템이 없다면 종료
                 if (manaRecoveryItems.length === 0) {
+                    console.log('설마 여기 걸리나...?');
                     return false;
                 }
 

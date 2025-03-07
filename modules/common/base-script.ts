@@ -246,7 +246,6 @@ export abstract class BaseScript {
 
         const currentPercent = (mana / maxMana) * 100;
 
-        console.log('isManaBelow', `${currentPercent} < ${percent}`);
         return currentPercent < percent;
     }
 
