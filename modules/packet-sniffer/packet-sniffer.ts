@@ -65,6 +65,7 @@ export class PacketSniffer {
                 const capturedData = this.variableQueue.shift();
                 const capturedDataLines = capturedData?.split('\n');
                 if (!capturedDataLines?.length) {
+                    await uSleep(50);
                     continue;
                 }
 
@@ -92,8 +93,6 @@ export class PacketSniffer {
                 }
             } catch (error) {
                 console.log(error);
-            } finally {
-                await uSleep(10);
             }
         }
     }
