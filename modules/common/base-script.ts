@@ -84,13 +84,17 @@ export abstract class BaseScript {
 
     private async runLoop(callback: () => Promise<void>) {
         do {
-            await this.terminateIfNotRunning();
+            try {
+                await this.terminateIfNotRunning();
 
-            if (await this.isActiveApp()) {
-                await callback.call(this);
+                if (await this.isActiveApp()) {
+                    await callback.call(this);
+                }
+            } catch (error) {
+                console.log(error);
+            } finally {
+                await uSleep(50);
             }
-
-            await uSleep(50);
         } while (await this.isRunning());
     }
 

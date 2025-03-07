@@ -7,9 +7,8 @@ export class ClientSelfLookParser implements IPacketParser {
 
     parse(packet: string): ParsedPacket<ClientSelfLook> {
         const [, packet2] = packet.split(PacketPattern.ClientSelfLook);
-        const packet3 = packet2.slice(this.delimiter.length, packet2.length);
 
-        const selfObjectId = this.extractObjectId(packet3);
+        const selfObjectId = this.extractObjectId(packet2);
 
         return {
             type: PacketType.ClientSelfLook,

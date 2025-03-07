@@ -5,14 +5,16 @@ import { uSleep } from '../utils';
 import { excludePatterns, TcpHeader } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
-import { castEncoding, toLittleEndianHex } from './domains';
+import { castEncoding } from './domains';
 import { debugLog } from '../utils/debug-log';
 
 @injectable()
 export class PacketSniffer {
     private tcpdumpProcess?: ChildProcessWithoutNullStreams;
+    private tcpdumpSendProcess?: ChildProcessWithoutNullStreams;
 
     private variableQueue: string[] = [];
+    private variableQueueForSend: string[] = [];
 
     constructor(
         @inject(EventEmitter) private readonly eventEmitter: EventEmitter,
@@ -20,13 +22,37 @@ export class PacketSniffer {
     ) {}
 
     public async run() {
-        this.executeTcpDump();
+        // this.executeTcpDumpForSend();
+        this.executeTcpDumpForRecv();
 
         // 비동기로 데이터를 처리하기 위해 await 없이 호출
         this.consumeVariableQueue();
+        // this.consumeVariableQueueForSend();
+        this.bindProcessTerminationForProcessKill();
     }
 
-    private executeTcpDump() {
+    private executeTcpDumpForSend() {
+        this.tcpdumpSendProcess = spawn('sudo', [
+            'sudo',
+            'tcpdump',
+            '-i',
+            'en0',
+            '-x',
+            '-l',
+            '-n',
+            'dst',
+            'port',
+            '32800',
+            'and',
+            'tcp[tcpflags] & (tcp-syn|tcp-fin|tcp-rst) = 0 and tcp[tcpflags] & tcp-push != 0',
+        ]);
+
+        this.tcpdumpSendProcess.stdout.on('data', packet => {
+            this.variableQueueForSend.push(castEncoding(packet, 'hex', 'ascii'));
+        });
+    }
+
+    private executeTcpDumpForRecv() {
         this.tcpdumpProcess = spawn('sudo', [
             'sudo',
             'tcpdump',
@@ -42,18 +68,19 @@ export class PacketSniffer {
         this.tcpdumpProcess.stdout.on('data', packet => {
             this.variableQueue.push(castEncoding(packet, 'hex', 'ascii'));
         });
-        this.bindProcessTerminationForProcessKill();
     }
 
     private bindProcessTerminationForProcessKill() {
         // Node.js가 종료될 때 tcpdump 종료시킨다.
         process.on('SIGINT', () => {
             this.tcpdumpProcess?.kill();
+            this.tcpdumpSendProcess?.kill();
             process.exit();
         });
 
         process.on('exit', () => {
             this.tcpdumpProcess?.kill();
+            this.tcpdumpSendProcess?.kill();
         });
     }
 
@@ -82,8 +109,8 @@ export class PacketSniffer {
                         // 패킷의 시퀀스 번호를 추출한다.
                         const tcpHeader = this.extractTcpHeader(packet);
                         debugLog('tcpHeader', tcpHeader);
-                        if(tcpHeader) {
-                            if(tcpHeader.sequenceNumber < lastSequenceNumber) {
+                        if (tcpHeader) {
+                            if (tcpHeader.sequenceNumber < lastSequenceNumber) {
                                 bucket.length = 0;
                                 continue;
                             }
@@ -97,6 +124,92 @@ export class PacketSniffer {
                         );
 
                         debugLog('customFragments', customFragments);
+
+                        // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
+                        lastCustomFragment = customFragments[customFragments.length - 1];
+                        await this.parseAndSendFragments(customFragments);
+
+                        bucket.length = 0;
+                    }
+
+                    bucket.push(dataFragment);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+
+    private async consumeVariableQueueForSend() {
+        let lastSequenceNumber = 0;
+        let lastCustomFragment = '';
+        const bucket: string[] = [];
+
+        while (true) {
+            try {
+                const capturedData = this.variableQueueForSend.shift();
+                const capturedDataLines = capturedData?.split('\n');
+                if (!capturedDataLines?.length) {
+                    await uSleep(20);
+                    continue;
+                }
+
+                debugLog('capturedData', capturedData);
+
+                const separatedLines = this.splitCaptureDataFromLines(capturedDataLines);
+                for (const [address, dataFragment] of separatedLines) {
+                    if (this.isFirstAddress(address) && bucket.length) {
+                        // 첫 시작이라면 지금까지 쌓여있던 패킷을 처리한다.
+                        const packet = this.reAssemblyPacketFromBucket(bucket);
+
+                        console.log('--------------------');
+                        // console.log(packet);
+                        // 패킷의 시퀀스 번호를 추출한다.
+                        const tcpHeader = this.extractTcpHeader(packet);
+                        debugLog('tcpHeader', tcpHeader);
+                        if (tcpHeader) {
+                            if (tcpHeader.sequenceNumber < lastSequenceNumber) {
+                                bucket.length = 0;
+                                continue;
+                            }
+
+                            lastSequenceNumber = tcpHeader.sequenceNumber;
+                        }
+
+                        // 패킷에서 데이터 부분만 추출
+                        const customFragments = this.splitPacketData(
+                            lastCustomFragment + packet.slice(52, packet.length),
+                        );
+
+                        for (const fragment of customFragments) {
+                            if (
+                                [
+                                    // Move
+                                    // '4d6f7665',
+                                    // YYYY HeartBeat1
+                                    '544f5a200d000000ffffffff000d000000',
+                                    // HeartBeat2 Unknown
+                                    '544f5a2009000000ffffffff00090000008e0b8baaffffffff008e0b8baa01000000',
+                                    '544f5a2005000000ffffffff00050000002f253f99ffffffff002f253f99',
+                                    // P_ServerSpellUse
+                                    '505f5365727665725370656c6c557365',
+                                    // 캐릭터 움직임
+                                    // '544f5a201b000000ffffffff',
+                                    // '544f5a2024000000ffffffff',
+                                    // SelfLook
+                                    '544f5a2012000000ffffffff001200000098ac25cfffffffff0098ac25cf01000000810100801600000001',
+                                    // 귓속말
+                                    '544f5a202b000000ffffffff002b00000098ac25cfffffffff0098ac25cf01000000810100800e0000000015000000040003000000313233040006000000eb9da0eba5b40a534f61c4c880180800d30d00000101080a6ae20be7481c99a6'
+                                ].some(excludePatterns => fragment.includes(excludePatterns))
+                            ) {
+                                continue;
+                            }
+
+                            // if(fragment.includes('505f5365727665725370656c6c557365')){
+                            console.log(fragment);
+                            // }
+                            debugLog('customFragments', customFragments);
+                        }
 
                         // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
                         lastCustomFragment = customFragments[customFragments.length - 1];
@@ -155,7 +268,7 @@ export class PacketSniffer {
     }
 
     private extractTcpHeader(packet: string): TcpHeader | null {
-        if(packet.slice(0, 4) !== '4502') {
+        if (packet.slice(0, 3) !== '450') {
             return null;
         }
 
@@ -178,6 +291,6 @@ export class PacketSniffer {
             sequenceNumber: parseInt(sequenceNumberHex, 16),
             urgentPointer: 0,
             windowSize: 0,
-        }
+        };
     }
 }
