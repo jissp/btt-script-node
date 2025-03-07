@@ -92,7 +92,7 @@ export class HellfireSupport extends BaseScript {
             await this.tryManaRecovery(99);
 
             // 공력증강 후 피 회복
-            await this.trySelfHeal();
+            await this.trySelfHealing();
         }
 
         if ((isCastFreeze && !this.hellFireTimer.isExpired()) || this.isDetectOtherObjectMove()) {
@@ -106,7 +106,7 @@ export class HellfireSupport extends BaseScript {
             this.unSetDetectCharacterHit();
 
             if (this.isHealthBelowByValue(10000)) {
-                await this.trySelfHeal();
+                await this.trySelfHealing();
             }
             await this.trySafetyFreeze();
 
@@ -128,7 +128,7 @@ export class HellfireSupport extends BaseScript {
             this.unSetDetectCharacterHit();
 
             if (this.isHealthBelowByValue(10000)) {
-                await this.trySelfHeal();
+                await this.trySelfHealing();
             }
             await this.trySafetyFreeze();
 
@@ -158,7 +158,7 @@ export class HellfireSupport extends BaseScript {
                 this.unSetDetectCharacterHit();
 
                 if (this.isHealthBelowByValue(10000)) {
-                    await this.trySelfHeal();
+                    await this.trySelfHealing();
                 }
                 await this.trySafetyFreeze();
             }
@@ -267,9 +267,8 @@ export class HellfireSupport extends BaseScript {
         await this.hellFireTimer.set();
     }
 
-    private async trySelfHeal() {
+    private async trySelfHealing() {
         console.log('HP 회복을 시도합니다.');
-        let healingCount = 0;
         do {
             await this.terminateIfNotRunning();
             if (this.isEmptyHealth() || (await this.isMode(SupportMode.None, true))) {
