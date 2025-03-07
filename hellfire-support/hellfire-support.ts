@@ -89,10 +89,10 @@ export class HellfireSupport extends BaseScript {
     private async runHellFireMode(isCastFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
         if (this.isManaBelow(20)) {
-            await this.tryManaRecovery(99);
+            await this.tryRecoveryForMana(99);
 
             // 공력증강 후 피 회복
-            await this.trySelfHealing();
+            await this.tryRecoveryForHealth();
         }
 
         if ((isCastFreeze && !this.hellFireTimer.isExpired()) || this.isDetectOtherObjectMove()) {
@@ -106,7 +106,7 @@ export class HellfireSupport extends BaseScript {
             this.unSetDetectCharacterHit();
 
             if (this.isHealthBelowByValue(10000)) {
-                await this.trySelfHealing();
+                await this.tryRecoveryForHealth();
             }
             await this.trySafetyFreeze();
 
@@ -128,7 +128,7 @@ export class HellfireSupport extends BaseScript {
             this.unSetDetectCharacterHit();
 
             if (this.isHealthBelowByValue(10000)) {
-                await this.trySelfHealing();
+                await this.tryRecoveryForHealth();
             }
             await this.trySafetyFreeze();
 
@@ -158,7 +158,7 @@ export class HellfireSupport extends BaseScript {
                 this.unSetDetectCharacterHit();
 
                 if (this.isHealthBelowByValue(10000)) {
-                    await this.trySelfHealing();
+                    await this.tryRecoveryForHealth();
                 }
                 await this.trySafetyFreeze();
             }
@@ -202,7 +202,7 @@ export class HellfireSupport extends BaseScript {
         }
     }
 
-    private async tryManaRecovery(limitCount = 9) {
+    private async tryRecoveryForMana(limitCount = 9) {
         let tryCount = 0;
         do {
             if (++tryCount > limitCount) {
@@ -267,7 +267,7 @@ export class HellfireSupport extends BaseScript {
         await this.hellFireTimer.set();
     }
 
-    private async trySelfHealing() {
+    private async tryRecoveryForHealth() {
         console.log('HP 회복을 시도합니다.');
         do {
             await this.terminateIfNotRunning();
