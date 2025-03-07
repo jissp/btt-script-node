@@ -95,6 +95,8 @@ export class PacketSniffer {
                             lastCustomFragment + packet.slice(52, packet.length),
                         );
 
+                        debugLog('customFragments', customFragments);
+
                         // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
                         lastCustomFragment = customFragments[customFragments.length - 1];
                         await this.parseAndSendFragments(customFragments);
