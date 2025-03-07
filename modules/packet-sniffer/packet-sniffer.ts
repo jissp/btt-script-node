@@ -2,10 +2,10 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { inject, injectable } from 'tsyringe';
 import { EventEmitter } from 'events';
 import { uSleep } from '../utils';
-import { excludePatterns } from './packet-sniffer.interface';
+import { excludePatterns, TcpHeader } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
-import { castEncoding } from './domains';
+import { castEncoding, toLittleEndianHex } from './domains';
 
 @injectable()
 export class PacketSniffer {
@@ -57,6 +57,7 @@ export class PacketSniffer {
     }
 
     private async consumeVariableQueue() {
+        let lastSequenceNumber = 0;
         let lastCustomFragment = '';
         const bucket: string[] = [];
 
@@ -71,22 +72,30 @@ export class PacketSniffer {
 
                 const separatedLines = this.splitCaptureDataFromLines(capturedDataLines);
                 for (const [address, dataFragment] of separatedLines) {
-                    if (this.isFirstAddress(address)) {
+                    if (this.isFirstAddress(address) && bucket.length) {
                         // 첫 시작이라면 지금까지 쌓여있던 패킷을 처리한다.
-                        if (bucket.length) {
-                            const packet = this.reAssemblyPacketFromBucket(bucket);
+                        const packet = this.reAssemblyPacketFromBucket(bucket);
 
-                            // 패킷에서 데이터 부분만 추출
-                            const customFragments = this.splitPacketData(
-                                lastCustomFragment + packet.slice(52, packet.length),
-                            );
+                        // 패킷의 시퀀스 번호를 추출한다.
+                        const tcpHeader = this.extractTcpHeader(packet);
+                        if(tcpHeader) {
+                            if(tcpHeader.sequenceNumber < lastSequenceNumber) {
+                                continue;
+                            }
 
-                            // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
-                            lastCustomFragment = customFragments[customFragments.length - 1];
-                            await this.parseAndSendFragments(customFragments);
-
-                            bucket.length = 0;
+                            lastSequenceNumber = tcpHeader.sequenceNumber;
                         }
+
+                        // 패킷에서 데이터 부분만 추출
+                        const customFragments = this.splitPacketData(
+                            lastCustomFragment + packet.slice(52, packet.length),
+                        );
+
+                        // fragment의 마지막을 구분할 수가 없음... 그래서 일단 보내고(어짜피 파싱이 안되면 버려질것), 다음 패킷 때 조합해서 또 보낸다.
+                        lastCustomFragment = customFragments[customFragments.length - 1];
+                        await this.parseAndSendFragments(customFragments);
+
+                        bucket.length = 0;
                     }
 
                     bucket.push(dataFragment);
@@ -134,5 +143,32 @@ export class PacketSniffer {
         }
 
         return [packet];
+    }
+
+    private extractTcpHeader(packet: string): TcpHeader | null {
+        if(packet.slice(0, 4) !== '4502') {
+            return null;
+        }
+
+        const sourceIpHex = packet.slice(24, 32);
+        const destinationIpHex = packet.slice(32, 40);
+        const sourcePortHex = packet.slice(40, 44);
+        const destinationPortHex = packet.slice(44, 48);
+        const sequenceNumberHex = packet.slice(48, 56);
+
+        return {
+            sourceIp: sourceIpHex,
+            destinationIp: destinationIpHex,
+            sourcePort: parseInt(sourcePortHex, 16),
+            destinationPort: parseInt(destinationPortHex, 16),
+            acknowledgmentNumber: 0,
+            checksum: 0,
+            dataOffset: 0,
+            flags: 0,
+            reserved: 0,
+            sequenceNumber: parseInt(sequenceNumberHex, 16),
+            urgentPointer: 0,
+            windowSize: 0,
+        }
     }
 }

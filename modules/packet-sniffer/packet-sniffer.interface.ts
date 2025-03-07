@@ -105,3 +105,18 @@ export const excludePatterns = [
 //
 // ];
 // export const excludeAnalysisPackets = Object.values(PacketType);
+
+export interface TcpHeader {
+    sourceIp: string;
+    destinationIp: string;
+    sourcePort: number;
+    destinationPort: number;
+    sequenceNumber: number;
+    acknowledgmentNumber: number;
+    dataOffset: number;
+    reserved: number;
+    flags: number;
+    windowSize: number;
+    checksum: number;
+    urgentPointer: number;
+}

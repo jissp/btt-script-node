@@ -23,7 +23,7 @@ export class HellfireSupport extends BaseScript {
     private freezeModeTimer: Timer;
     private itemCheckerTimer: Timer;
 
-    protected excludePacketPatterns = [PacketType.UpdatedPartialCharacterStatus];
+    // protected excludePacketPatterns = [PacketType.UpdatedPartialCharacterStatus];
 
     constructor(
         @inject('ScriptName') protected readonly scriptName: string,
