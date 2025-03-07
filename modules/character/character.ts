@@ -54,6 +54,7 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     getMana() {
+        console.log(`현재 마나: ${this.mana}`);
         return this.mana;
     }
 
