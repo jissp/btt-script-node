@@ -86,7 +86,7 @@ export class HellfireSupport extends BaseScript {
         this.tryRefreshItemList();
     }
 
-    private async runHellFireMode(isFreeze: boolean) {
+    private async runHellFireMode(isCastFreeze: boolean) {
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
         if (this.isManaBelow(20)) {
             await this.tryManaRecovery(99);
@@ -95,17 +95,19 @@ export class HellfireSupport extends BaseScript {
             await this.trySelfHeal();
         }
 
-        if ((isFreeze && !this.hellFireTimer.isExpired()) || this.isLatestDetectObjectMove()) {
+        if ((isCastFreeze && !this.hellFireTimer.isExpired()) || this.isDetectOtherObjectMove()) {
             await this.runFreezeMode();
 
             return false;
         }
 
-        // 몬스터 찾기 전 체력이 부족한 경우 공격받는 중일 수 있음.
-        // if (this.isEmptyHealth()) {
+        // 만약 공격을 받는 중이라면 체력 회복 및 캐릭터 주변 몹에게 마비를 겁니다.
         if (this.isDetectCharacterHit()) {
             this.unSetDetectCharacterHit();
-            await this.trySelfHeal();
+
+            if (this.isHealthBelowByValue(10000)) {
+                await this.trySelfHeal();
+            }
             await this.trySafetyFreeze();
 
             await uSleep(100);
@@ -118,19 +120,23 @@ export class HellfireSupport extends BaseScript {
 
         console.log('몬스터 감지');
 
+        // 마법 시전 Tick에 걸릴 수 있기 때문에 일정 시간 대기한 다음 공격한다.
         await uSleep(600);
 
         // 헬파이어 날리기 전에 공격받고 있는지 체크
-        if (this.isHealthBelowByValue(10000) || this.isDetectCharacterHit()) {
+        if (this.isDetectCharacterHit()) {
             this.unSetDetectCharacterHit();
 
-            await this.trySelfHeal();
+            if (this.isHealthBelowByValue(10000)) {
+                await this.trySelfHeal();
+            }
             await this.trySafetyFreeze();
+
             await uSleep(100);
         }
 
         // 몬스터를 찾았다면 저주 + 헬파이어 사용
-        await this.runCurseAndHellfire();
+        await this.castCurseAndHellfire();
         await uSleep(1000);
 
         return true;
@@ -236,7 +242,7 @@ export class HellfireSupport extends BaseScript {
         return true;
     }
 
-    private async runCurseAndHellfire() {
+    private async castCurseAndHellfire() {
         console.log('몬스터를 공격합니다.');
         await this.terminateIfNotRunning();
 
@@ -302,7 +308,7 @@ export class HellfireSupport extends BaseScript {
         this.localStorage.variable('item-rows', items);
     }
 
-    private isLatestDetectObjectMove() {
+    private isDetectOtherObjectMove() {
         const currentTimestamp = Date.now();
 
         return currentTimestamp - this.latestDetectedOtherObjectMoveTimestamp < 1000;

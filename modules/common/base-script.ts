@@ -136,19 +136,22 @@ export abstract class BaseScript {
             case PacketType.ChangedObjectHpBarValue:
                 {
                     const { objectId, hpBarValue, maxHpBarValue } = data as ChangedObjectHpBar;
-                    if (this.character.getSelfObjectId() === objectId) {
-                        const beforeHpBarValue = this.character.getHpBarValue();
-                        this.character.updateHpBarValue(hpBarValue);
+                    // 다른 객체에 대한 HpBarValue 변경은 무시
+                    if (this.character.getSelfObjectId() !== objectId) {
+                        return;
+                    }
 
-                        if (hpBarValue < beforeHpBarValue && hpBarValue != maxHpBarValue) {
-                            this.detectedDecrementHpBarValue++;
+                    const beforeHpBarValue = this.character.getHpBarValue();
+                    this.character.updateHpBarValue(hpBarValue);
 
-                            if (this.isDetectCharacterHit()) {
-                                console.log('캐릭터 피격 감지');
-                            }
-                        } else {
-                            this.unSetDetectCharacterHit();
+                    if (hpBarValue < beforeHpBarValue && hpBarValue != maxHpBarValue) {
+                        this.detectedDecrementHpBarValue++;
+
+                        if (this.isDetectCharacterHit()) {
+                            console.log('캐릭터 피격 감지');
                         }
+                    } else {
+                        this.unSetDetectCharacterHit();
                     }
                 }
                 break;
@@ -161,10 +164,14 @@ export abstract class BaseScript {
             case PacketType.ChangedObjectMove:
                 {
                     const { objectId } = data as ChangedObjectMove;
-                    if (this.character.getSelfObjectId() !== objectId) {
-                        console.log(`오브젝트(${data.objectId}) 움직임 감지`);
-                        this.latestDetectedOtherObjectMoveTimestamp = Date.now();
+
+                    // 자신의 객체가 움직이면 무시
+                    if (this.character.getSelfObjectId() === objectId) {
+                        return;
                     }
+
+                    console.log(`오브젝트(${data.objectId}) 움직임 감지`);
+                    this.latestDetectedOtherObjectMoveTimestamp = Date.now();
                 }
                 break;
             default:
