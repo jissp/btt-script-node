@@ -144,7 +144,7 @@ export abstract class BaseScript {
                     const beforeHpBarValue = this.character.getHpBarValue();
                     this.character.updateHpBarValue(hpBarValue);
 
-                    if (hpBarValue < beforeHpBarValue && hpBarValue != maxHpBarValue) {
+                    if (hpBarValue <= beforeHpBarValue && hpBarValue != maxHpBarValue) {
                         this.detectedDecrementHpBarValue++;
 
                         if (this.isDetectCharacterHit()) {
