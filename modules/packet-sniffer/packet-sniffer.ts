@@ -93,7 +93,7 @@ export class PacketSniffer {
             } catch (error) {
                 console.log(error);
             } finally {
-                await uSleep(50);
+                await uSleep(10);
             }
         }
     }
