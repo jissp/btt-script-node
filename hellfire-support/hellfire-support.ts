@@ -145,7 +145,7 @@ export class HellfireSupport extends BaseScript {
     private async runFreezeMode() {
         console.log('주변 적에게 마비/절망을 시전합니다.');
         for (let freezeCount = 0; freezeCount < 5; freezeCount++) {
-            if (this.mode === SupportMode.None) {
+            if (await this.isMode(SupportMode.None, true)) {
                 return;
             }
 
@@ -154,11 +154,12 @@ export class HellfireSupport extends BaseScript {
                 return;
             }
 
-            // 마비 도중 체력이 부족한 경우 공격받는 중일 수 있음.
             if (this.isDetectCharacterHit()) {
                 this.unSetDetectCharacterHit();
 
-                await this.trySelfHeal();
+                if (this.isHealthBelowByValue(10000)) {
+                    await this.trySelfHeal();
+                }
                 await this.trySafetyFreeze();
             }
 
