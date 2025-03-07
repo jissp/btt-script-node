@@ -43,6 +43,7 @@ export class Character<Spell = BaseCharacterSpell> {
     }
 
     getHealth() {
+        console.log(`현재 체력: ${this.health}`);
         return this.health;
     }
 
