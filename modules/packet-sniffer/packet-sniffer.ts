@@ -79,7 +79,7 @@ export class PacketSniffer {
                         // 패킷의 시퀀스 번호를 추출한다.
                         const tcpHeader = this.extractTcpHeader(packet);
                         if(tcpHeader) {
-                            if(tcpHeader.sequenceNumber < lastSequenceNumber) {
+                            if(tcpHeader.sequenceNumber <= lastSequenceNumber) {
                                 continue;
                             }
 
