@@ -71,6 +71,8 @@ export class PacketSniffer {
                     continue;
                 }
 
+                debugLog('capturedData', capturedData);
+
                 const separatedLines = this.splitCaptureDataFromLines(capturedDataLines);
                 for (const [address, dataFragment] of separatedLines) {
                     if (this.isFirstAddress(address) && bucket.length) {
@@ -79,6 +81,7 @@ export class PacketSniffer {
 
                         // 패킷의 시퀀스 번호를 추출한다.
                         const tcpHeader = this.extractTcpHeader(packet);
+                        debugLog('tcpHeader', tcpHeader);
                         if(tcpHeader) {
                             if(tcpHeader.sequenceNumber <= lastSequenceNumber) {
                                 continue;
