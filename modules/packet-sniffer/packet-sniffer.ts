@@ -84,6 +84,7 @@ export class PacketSniffer {
                         debugLog('tcpHeader', tcpHeader);
                         if(tcpHeader) {
                             if(tcpHeader.sequenceNumber <= lastSequenceNumber) {
+                                bucket.length = 0;
                                 continue;
                             }
 
