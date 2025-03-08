@@ -5,7 +5,6 @@ import { Timer } from '../modules/timer';
 import { BttKeyCode } from '../modules/btt-client';
 import { Wntnftk } from '../modules/base-character-spell';
 import { CharacterFactory } from '../modules/character';
-import { PacketType } from '../modules/packet-sniffer';
 
 enum SupportMode {
     HellFire = 'hellfire',
@@ -87,6 +86,12 @@ export class HellfireSupport extends BaseScript {
     }
 
     private async runHellFireMode(isCastFreeze: boolean) {
+        // 죽은 경우 스크립트 멈춤
+        if (this.isEmptyHealth()) {
+            await this.switchMode(SupportMode.None);
+            return;
+        }
+
         // 마나가 없다면 회복 하기 (여기에서 체크하는 이유는 렉 때문에 헬파이어 사용 후 회복을 못할 수 있기 때문)
         if (this.isManaBelow(20)) {
             await this.tryRecoveryForMana(99);
@@ -145,6 +150,11 @@ export class HellfireSupport extends BaseScript {
     private async runFreezeMode() {
         console.log('주변 적에게 마비/절망을 시전합니다.');
         for (let freezeCount = 0; freezeCount < 5; freezeCount++) {
+            if (this.isEmptyHealth()) {
+                await this.switchMode(SupportMode.None);
+                return;
+            }
+
             if (await this.isMode(SupportMode.None, true)) {
                 return;
             }
@@ -205,7 +215,7 @@ export class HellfireSupport extends BaseScript {
     private async tryRecoveryForMana(limitCount = 9) {
         let tryCount = 0;
         do {
-            if (++tryCount > limitCount) {
+            if (++tryCount > limitCount || this.isEmptyHealth()) {
                 return false;
             }
 
