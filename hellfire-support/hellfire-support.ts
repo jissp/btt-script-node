@@ -215,7 +215,11 @@ export class HellfireSupport extends BaseScript {
     private async tryRecoveryForMana(limitCount = 9) {
         let tryCount = 0;
         do {
-            if (++tryCount > limitCount || this.isEmptyHealth()) {
+            const isExceededLimit = ++tryCount > limitCount;
+            const isDie = this.isEmptyHealth();
+            const isModeNone = await this.isMode(SupportMode.None, true);
+
+            if (isExceededLimit || isDie || isModeNone) {
                 return false;
             }
 
