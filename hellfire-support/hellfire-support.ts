@@ -121,7 +121,7 @@ export class HellfireSupport extends BaseScript {
         console.log('몬스터 감지');
 
         // 마법 시전 Tick에 걸릴 수 있기 때문에 일정 시간 대기한 다음 공격한다.
-        await uSleep(600);
+        await uSleep(500);
 
         // 헬파이어 날리기 전에 공격받고 있는지 체크
         if (this.isDetectCharacterHit()) {
@@ -215,7 +215,6 @@ export class HellfireSupport extends BaseScript {
 
                 // 마나회복용 아이템이 없다면 종료
                 if (manaRecoveryItems.length === 0) {
-                    console.log('설마 여기 걸리나...?');
                     return false;
                 }
 
@@ -232,7 +231,7 @@ export class HellfireSupport extends BaseScript {
                 }
 
                 await this.useManaRecoveryItem();
-                await uSleep(200);
+                await uSleep(250);
             }
 
             await this.terminateIfNotRunning();

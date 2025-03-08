@@ -1,12 +1,11 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { inject, injectable } from 'tsyringe';
 import { EventEmitter } from 'events';
-import { uSleep } from '../utils';
+import { debugLog, uSleep } from '../utils';
 import { excludePatterns, TcpHeader } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
 import { castEncoding } from './domains';
-import { debugLog } from '../utils/debug-log';
 
 @injectable()
 export class PacketSniffer {
@@ -199,7 +198,7 @@ export class PacketSniffer {
                                     // SelfLook
                                     '544f5a2012000000ffffffff001200000098ac25cfffffffff0098ac25cf01000000810100801600000001',
                                     // 귓속말
-                                    '544f5a202b000000ffffffff002b00000098ac25cfffffffff0098ac25cf01000000810100800e0000000015000000040003000000313233040006000000eb9da0eba5b40a534f61c4c880180800d30d00000101080a6ae20be7481c99a6'
+                                    '544f5a202b000000ffffffff002b00000098ac25cfffffffff0098ac25cf01000000810100800e0000000015000000040003000000313233040006000000eb9da0eba5b40a534f61c4c880180800d30d00000101080a6ae20be7481c99a6',
                                 ].some(excludePatterns => fragment.includes(excludePatterns))
                             ) {
                                 continue;
