@@ -1,7 +1,7 @@
 import * as path from 'node:path';
-import { BttKeyCode } from '../btt-client';
-import { PacketType } from '../packet-sniffer';
-import { sleep } from '../utils';
+import { BttKeyCode } from '../modules/btt-client';
+import { PacketType } from '../modules/packet-sniffer';
+import { sleep } from './utils';
 import { ScriptContext } from './script-context';
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
 import { registerEventHandlers } from './decorators';

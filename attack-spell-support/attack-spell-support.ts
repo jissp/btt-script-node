@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, GameContext, ScriptContext } from '../modules/common';
+import { BaseScript, GameContext, ScriptContext } from '../common';
 import { BttKeyCode } from '../modules/btt-client';
-import { sleep } from '../modules/utils';
+import { sleep } from '../common/utils';
 import { Timer } from '../modules/timer';
 
 @injectable()

@@ -1,12 +1,12 @@
 import { inject, injectable } from 'tsyringe';
-import { BttKeyCode, BttService, ImageSearchRegion } from '../../btt-client';
+import { BttKeyCode, BttService, ImageSearchRegion } from '../../modules/btt-client';
 import { GameRect, Latency, SearchImageBase64Type } from '../common.interface';
 import { ocrByClipboard, screenCapture } from '../externals';
 import { ScriptHelper } from '../script.helper';
 import { OnEvent } from '../decorators';
-import { ChangedObjectMove, PacketSnifferEvent, ParsedPacket } from '../../packet-sniffer';
+import { ChangedObjectMove, PacketSnifferEvent, ParsedPacket } from '../../modules/packet-sniffer';
 import { GameCharacterHelper } from './game-character.helper';
-import { Timer, TimerFactory } from '../../timer';
+import { Timer, TimerFactory } from '../../modules/timer';
 
 @injectable()
 export class GameSystemHelper {

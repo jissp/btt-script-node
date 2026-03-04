@@ -1,8 +1,8 @@
 import { inject, injectable } from 'tsyringe';
 import { TerminateException } from './exceptions';
 import { WindowRect } from './common.interface';
-import { BttService } from '../btt-client';
-import { BttStorage } from '../storage';
+import { BttService } from '../modules/btt-client';
+import { BttStorage } from '../modules/storage';
 
 @injectable()
 export class ScriptHelper {

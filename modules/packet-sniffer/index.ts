@@ -1,3 +1,4 @@
+export * from './utils';
 export * from './parsers';
 export * from './packet-sniffer.interface';
 export * from './packet-sniffer.event';

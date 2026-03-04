@@ -1,9 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { EventEmitter } from 'events';
-import { BttStorage, LocalStorage } from '../storage';
-import { BttService } from '../btt-client';
-import { TimerFactory } from '../timer';
-import { PacketSniffer } from '../packet-sniffer';
+import { BttStorage, LocalStorage } from '../modules/storage';
+import { BttService } from '../modules/btt-client';
+import { TimerFactory } from '../modules/timer';
+import { PacketSniffer } from '../modules/packet-sniffer';
 import { ScriptHelper } from './script.helper';
 
 /**

@@ -1,11 +1,11 @@
 import { inject, injectable } from 'tsyringe';
 import { GameRect, ManaRecoveryItems } from '../common.interface';
-import { BttKeyCode, BttService } from '../../btt-client';
+import { BttKeyCode, BttService } from '../../modules/btt-client';
 import { Nullable } from '../types';
 import { ocrByClipboard, screenCapture } from '../externals';
 import { ScriptHelper } from '../script.helper';
-import { LocalStorage } from '../../storage';
-import { Timer, TimerFactory } from '../../timer';
+import { LocalStorage } from '../../modules/storage';
+import { Timer, TimerFactory } from '../../modules/timer';
 
 @injectable()
 export class GameItemHelper {

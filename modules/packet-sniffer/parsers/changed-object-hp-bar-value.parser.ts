@@ -1,6 +1,6 @@
 import { ChangedObjectHpBar, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
-import { toLittleEndianHex } from '../domains/to-little-endian-hex';
+import { toLittleEndianHex } from '../utils/to-little-endian-hex';
 
 /**
  *

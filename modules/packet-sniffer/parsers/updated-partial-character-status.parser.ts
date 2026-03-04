@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import { CharacterStatusPartialUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
-import { castEncoding } from '../domains';
+import { castEncoding } from '../utils';
 
 export class UpdatedPartialCharacterStatusParser implements IPacketParser {
     parse(packet: string): ParsedPacket<CharacterStatusPartialUpdate> {

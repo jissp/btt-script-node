@@ -1,6 +1,6 @@
 import { CharacterStatusUpdate, IPacketParser, ParsedPacket } from './parser.interface';
 import { PacketPattern, PacketType } from '../packet-sniffer.interface';
-import { castEncoding } from '../domains';
+import { castEncoding } from '../utils';
 
 export class UpdatedCharacterStatusParser implements IPacketParser {
     private readonly statusKeys: (keyof CharacterStatusUpdate)[] = ['m', 'g', 'h', 'mh', 'mm'];
@@ -35,14 +35,6 @@ export class UpdatedCharacterStatusParser implements IPacketParser {
 
             return previousValue;
         }, {} as CharacterStatusUpdate);
-
-        if (result['h'] && Number.isNaN(Number(result.h))) {
-            console.log(packet);
-        }
-
-        if (result['m'] && Number.isNaN(Number(result.m))) {
-            console.log(packet);
-        }
 
         return {
             type: PacketType.UpdatedCharacterStatus,

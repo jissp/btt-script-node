@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { Latency } from '../common.interface';
-import { sleep } from '../../utils';
-import { BttKeyCode, BttService } from '../../btt-client';
+import { sleep } from '../utils';
+import { BttKeyCode, BttService } from '../../modules/btt-client';
 
 export type SpellKeyCodes =
     | BttKeyCode.Number0

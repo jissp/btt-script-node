@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
-import { sleep } from '../utils';
-import { Latency, WindowRect } from '../common';
+import { sleep } from '../../common/utils';
+import { Latency, WindowRect } from '../../common';
 import { BttClient } from './btt.client';
 import { BttKeyCode, ImageSearchAfterMouseMoveType, ImageSearchOn, ImageSearchRegion } from './btt.interface';
 import { BttStorage } from '../storage';

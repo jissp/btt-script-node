@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { inject, injectable } from 'tsyringe';
-import { BttKeyCode, BttService } from '../../btt-client';
+import { BttKeyCode, BttService } from '../../modules/btt-client';
 import {
     ChangedObjectHpBar,
     CharacterStatusPartialUpdate,
@@ -8,7 +8,7 @@ import {
     ClientSelfLook,
     PacketSnifferEvent,
     ParsedPacket,
-} from '../../packet-sniffer';
+} from '../../modules/packet-sniffer';
 import { GameRect } from '../common.interface';
 import { OnEvent } from '../decorators';
 import { ocrByClipboard, screenCapture } from '../externals';

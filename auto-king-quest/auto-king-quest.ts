@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript, GameContext, GameRect, ocrByClipboard, screenCapture, ScriptContext } from '../modules/common';
+import { BaseScript, GameContext, GameRect, ocrByClipboard, screenCapture, ScriptContext } from '../common';
 import { BttKeyCode, ImageSearchAfterMouseMoveType, ImageSearchOn, ImageSearchRegion } from '../modules/btt-client';
-import { sleep } from '../modules/utils';
+import { sleep } from '../common/utils';
 
 enum Sequence {
     // 왕궁 캐릭터에게 출두

@@ -1,8 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import { LocalStorage } from '../../storage';
+import { LocalStorage } from '../../modules/storage';
 import { ocrByClipboard, screenCapture } from '../externals';
 import { GameRect } from '../common.interface';
-import { Timer, TimerFactory } from '../../timer';
+import { Timer, TimerFactory } from '../../modules/timer';
 import { ScriptHelper } from '../script.helper';
 import { Nullable } from '../types';
 
