@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { uSleep } from '../utils';
+import { sleep } from '../utils';
 import { Latency, WindowRect } from '../common';
 import { BttClient } from './btt.client';
 import { BttKeyCode, ImageSearchAfterMouseMoveType, ImageSearchOn, ImageSearchRegion } from './btt.interface';
@@ -33,7 +33,7 @@ export class BttService {
         });
 
         if (afterWaitMilliSeconds) {
-            await uSleep(afterWaitMilliSeconds);
+            await sleep(afterWaitMilliSeconds);
         }
     }
 
@@ -169,9 +169,9 @@ export class BttService {
 
     async wrapKeyboardInputBlock(callback: () => Promise<void>) {
         await this.startKeyboardInputBlock();
-        await uSleep(25);
+        await sleep(25);
         await callback();
-        await uSleep(25);
+        await sleep(25);
         return this.stopKeyboardInputBlock();
     }
 }

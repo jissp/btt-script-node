@@ -1,2 +1,2 @@
-export * from './u-sleep';
+export * from './sleep';
 export * from './debug-log';

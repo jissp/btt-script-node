@@ -1,61 +1,62 @@
 import { inject, injectable } from 'tsyringe';
-import { BaseScript } from '../modules/common';
+import { BaseScript, GameContext, ScriptContext } from '../modules/common';
 import { BttKeyCode } from '../modules/btt-client';
-import { uSleep } from '../modules/utils';
-import { Character, CharacterFactory } from '../modules/character';
-import { Wntnftk } from '../modules/base-character-spell';
+import { sleep } from '../modules/utils';
+import { Timer } from '../modules/timer';
 
 @injectable()
 export class AttackSpellSupport extends BaseScript {
-    protected readonly character: Character<Wntnftk>;
+    private defensiveTimer: Timer;
 
-    constructor(
-        @inject('ScriptName') protected readonly scriptName: string,
-        @inject(CharacterFactory) characterFactory: CharacterFactory,
-    ) {
-        const character = characterFactory.create<Wntnftk>(Wntnftk);
+    constructor(@inject(ScriptContext) scriptContext: ScriptContext, @inject(GameContext) gameContext: GameContext) {
+        super(scriptContext, gameContext);
 
-        super(character);
-
-        this.character = character;
+        this.defensiveTimer = this.scriptContext.timerFactory.create('defensive', 185000);
     }
 
-    protected async initialized(): Promise<void> {}
+    public async initialized(): Promise<void> {}
 
-    protected async handle(): Promise<void> {
-        await this.character.spell.closeTargetBox();
-        await uSleep(200);
+    public async handle(): Promise<void> {
+        await this.gameContext.system.closeTargetBox();
+        await sleep(200);
 
         if (this.defensiveTimer.isExpired()) {
-            await this.runDefensive(true);
+            await this.gameContext.spell.castDefensiveSpell(true);
             await this.defensiveTimer.set();
         }
 
-        if (this.isManaBelow(20)) {
+        if (this.gameContext.character.isManaBelow(20)) {
             await this.tryManaRecovery();
         }
 
         // 몬스터 타겟팅
-        await this.bttService.wrapKeyboardInputBlock(async () => {
-            await this.bttService.sendKeys({ keyCodes: [BttKeyCode.Tab, BttKeyCode.ArrowUp, BttKeyCode.Tab] });
+        await this.scriptContext.bttService.wrapKeyboardInputBlock(async () => {
+            await this.scriptContext.bttService.sendKeys({
+                keyCodes: [BttKeyCode.Tab, BttKeyCode.ArrowUp, BttKeyCode.Tab],
+            });
         });
 
         if (!(await this.searchMonster(true))) {
             return;
         }
 
+        let isTargetSelecting = false;
         do {
-            await this.bttService.sendKeys({ keyCodes: [BttKeyCode.Number3, BttKeyCode.Number1, BttKeyCode.Number1] });
-        } while (!(await this.isTargetSelecting()));
+            await this.scriptContext.bttService.sendKeys({
+                keyCodes: [BttKeyCode.Number3, BttKeyCode.Number1, BttKeyCode.Number1],
+            });
+
+            isTargetSelecting = await this.gameContext.system.isTargetSelecting();
+        } while (isTargetSelecting);
     }
 
     // 오버라이딩
     async searchMonster(isNext: boolean) {
-        await this.bttService.sendKey(BttKeyCode.Number2);
+        await this.scriptContext.bttService.sendKey(BttKeyCode.Number2);
 
-        await uSleep(80); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
+        await sleep(80); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
 
-        const lastGameLog = await this.getLastGameLog();
+        const lastGameLog = await this.gameContext.system.getLastGameLog();
 
         return ['걸리지 않습니다'].some(keyword => lastGameLog.includes(keyword));
     }
@@ -63,14 +64,14 @@ export class AttackSpellSupport extends BaseScript {
     private async tryManaRecovery(limitCount = 5) {
         let tryCount = 0;
         do {
-            await this.terminateIfNotRunning();
+            await this.scriptContext.scriptHelper.terminateIfNotRunning();
 
-            if (++tryCount > limitCount || this.isEmptyHealth()) {
+            if (++tryCount > limitCount || this.gameContext.character.isDead()) {
                 return false;
             }
 
-            await this.bttService.sendKey(BttKeyCode.Number1, 100);
-        } while (this.isManaBelow(20));
+            await this.scriptContext.bttService.sendKey(BttKeyCode.Number1, 100);
+        } while (this.gameContext.character.isManaBelow(20));
 
         return true;
     }

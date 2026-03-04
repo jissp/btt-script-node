@@ -1,404 +1,125 @@
 import * as path from 'node:path';
-import { container } from 'tsyringe';
-import { EventEmitter } from 'events';
-import { uSleep } from '../utils';
-import { GameRect, Latency, ManaRecoveryItems, SearchImageBase64Type, WindowRect } from './common.interface';
+import { BttKeyCode } from '../btt-client';
+import { PacketType } from '../packet-sniffer';
+import { sleep } from '../utils';
+import { ScriptContext } from './script-context';
 import { NotSupportedBackgroundHandleException, TerminateException } from './exceptions';
-import { LocalStorage } from '../local-storage';
-import { ocrByClipboard, screenCapture } from './externals';
-import { BttKeyCode, BttService, ImageSearchRegion } from '../btt-client';
-import { BttStorage } from '../storage';
-import { Timer, TimerFactory } from '../timer';
-import {
-    ChangedObjectHpBar,
-    ChangedObjectMove,
-    ClientSelfLook,
-    PacketParser,
-    PacketSniffer,
-    PacketSnifferEvent,
-    PacketType,
-    ParsedPacket,
-} from '../packet-sniffer';
-import { Character } from '../character';
+import { registerEventHandlers } from './decorators';
+import { GameContext } from './game-context';
 
 export abstract class BaseScript {
-    protected readonly character: Character;
-
     protected readonly executePath: string;
     protected readonly storagePath: string;
-    protected readonly bttService: BttService;
-    protected readonly localStorage: LocalStorage;
-    protected readonly bttStorage: BttStorage;
-    protected readonly packetParser: PacketParser;
-    protected readonly timerFactory: TimerFactory;
-    protected readonly packetSniffer: PacketSniffer;
-    protected readonly eventEmitter: EventEmitter;
 
-    protected abstract readonly scriptName: string;
-    private readonly scriptStartedTimestamp: number;
-    private _activeWindowRect?: WindowRect;
+    readonly excludePacketPatterns: PacketType[] = [];
 
-    protected defensiveTimer: Timer;
-
-    protected excludePacketPatterns: PacketType[] = [];
-    protected latestDetectedOtherObjectMoveTimestamp: number = 0;
-    protected detectedDecrementHpBarValue: number = 0;
-
-    protected constructor(character: Character) {
-        this.character = character;
+    protected constructor(
+        protected readonly scriptContext: ScriptContext,
+        protected readonly gameContext: GameContext,
+    ) {
         this.executePath = path.resolve('.');
         this.storagePath = `/tmp`;
-        this.localStorage = container.resolve(LocalStorage);
-        this.bttStorage = container.resolve(BttStorage);
-        this.bttService = container.resolve(BttService);
-        this.timerFactory = container.resolve(TimerFactory);
-        this.packetParser = container.resolve(PacketParser);
-        this.packetSniffer = container.resolve(PacketSniffer);
-        this.eventEmitter = container.resolve(EventEmitter);
-
-        this.scriptStartedTimestamp = new Date().getTime();
-
-        this.defensiveTimer = this.timerFactory.create('defensive', 185000);
     }
 
+    /**
+     * 스크립트를 초기화합니다.
+     * 상태 설정, 패킷 리스너 등록, initialized() 호출을 담당합니다.
+     */
     public async init() {
-        await this.bttStorage.stringVariable('current-auto-script-name', this.scriptName);
-        // 숫자가 높으면 과학적 표기법으로 변경되버려서 스트링으로 저장함.
-        await this.bttStorage.scriptVariable('started-timestamp', this.scriptStartedTimestamp.toString());
-        this._activeWindowRect = await this.bttService.getActiveWindowRect();
+        // @OnEvent 데코레이터 핸들러 등록
+        registerEventHandlers(this, this.scriptContext.eventEmitter);
 
-        await this.defensiveTimer.init();
+        // 패킷 스니퍼 시작
+        await this.scriptContext.packetSniffer.run();
 
-        this.eventEmitter.on(PacketSnifferEvent.ReceiveParsedPacket, (packet: ParsedPacket) =>
-            this.handleReceivePacket(packet),
-        );
-        this.packetSniffer.run();
-        await this.initialized();
+        // 스크립트별 초기화 로직 실행
+        await this.initialized?.();
     }
 
     protected async initialized() {}
 
+    /**
+     * 메인 루프에서 실행될 핵심 로직입니다.
+     * 50ms 간격으로 반복 실행되며, 게임 윈도우가 활성화되어 있을 때만 동작합니다.
+     */
+    public abstract handle(): Promise<void>;
+
+    /**
+     * 백그라운드 루프에서 실행될 로직입니다.
+     * 메인 루프와 병렬로 50ms 간격으로 실행됩니다.
+     * 구현은 선택사항입니다.
+     */
+    protected async handleForBackground(): Promise<void> {
+        throw new NotSupportedBackgroundHandleException();
+    }
+
+    /**
+     * 스크립트의 메인 및 백그라운드 루프를 병렬 실행합니다.
+     */
     public async run(): Promise<void> {
-        await Promise.all([this.runLoop(this.callbackForMain), this.runLoop(this.callbackForBackground)]);
+        await Promise.all([
+            this.runLoop(() => this.callbackForMain()),
+            this.runLoop(() => this.callbackForBackground()),
+        ]);
     }
 
-    private async runLoop(callback: () => Promise<void>) {
+    /**
+     * 메인/백그라운드 루프를 실행합니다.
+     */
+    private async runLoop(callback: () => Promise<void>): Promise<void> {
         do {
-            try {
-                await this.terminateIfNotRunning();
-
-                if (await this.isActiveApp()) {
-                    await callback.call(this);
-                }
-            } catch (error) {
-                console.log(error);
-            } finally {
-                await uSleep(50);
+            const isActiveApp = await this.scriptContext.scriptHelper.isActiveApp();
+            if (isActiveApp) {
+                await callback();
             }
-        } while (await this.isRunning());
+
+            await sleep(50);
+        } while (await this.scriptContext.scriptHelper.isRunning());
     }
 
-    private async callbackForMain() {
+    /**
+     * 메인 루프 콜백입니다.
+     */
+    private async callbackForMain(): Promise<void> {
         try {
-            await this.handle.call(this);
+            await this.handle();
         } catch (error) {
             if (error instanceof TerminateException) {
                 throw error;
             }
 
-            await this.bttStorage.scriptVariable('last-error', error as string);
+            await this.scriptContext.bttStorage.scriptVariable('last-error', error as string);
         }
     }
 
-    private async handleReceivePacket(packet: ParsedPacket) {
-        await this.terminateIfNotRunning();
-
-        const { type, data } = packet;
-
-        // 상속받은 클래스에서 제외할 패킷 타입이면 무시
-        if (this.excludePacketPatterns.includes(type)) {
-            return;
-        }
-
-        switch (type) {
-            case PacketType.UpdatedCharacterStatus:
-            case PacketType.UpdatedPartialCharacterStatus:
-                const packetDataKeys = Object.keys(data);
-
-                if (packetDataKeys.includes('h')) {
-                    this.character.updateHealth(Number(data.h));
-                }
-
-                if (packetDataKeys.includes('m')) {
-                    this.character.updateMana(Number(data.m));
-                }
-
-                if (packetDataKeys.includes('mm')) {
-                    this.character.updateMaxMana(Number(data.mm));
-                }
-                break;
-            case PacketType.ChangedObjectHpBarValue:
-                {
-                    const { objectId, hpBarValue, maxHpBarValue } = data as ChangedObjectHpBar;
-                    // 다른 객체에 대한 HpBarValue 변경은 무시
-                    if (this.character.getSelfObjectId() !== objectId) {
-                        return;
-                    }
-
-                    const beforeHpBarValue = this.character.getHpBarValue();
-                    this.character.updateHpBarValue(hpBarValue);
-
-                    if (hpBarValue <= beforeHpBarValue && hpBarValue != maxHpBarValue) {
-                        this.detectedDecrementHpBarValue++;
-
-                        if (this.isDetectCharacterHit()) {
-                            console.log('캐릭터 피격 감지');
-                        }
-                    } else {
-                        this.unSetDetectCharacterHit();
-                    }
-                }
-                break;
-            case PacketType.ClientSelfLook:
-                {
-                    const { objectId } = data as ClientSelfLook;
-                    this.character.setSelfObjectId(objectId);
-                }
-                break;
-            case PacketType.ChangedObjectMove:
-                {
-                    const { objectId } = data as ChangedObjectMove;
-
-                    // 자신의 객체가 움직이면 무시
-                    if (this.character.getSelfObjectId() === objectId) {
-                        return;
-                    }
-
-                    console.log(`오브젝트(${data.objectId}) 움직임 감지`);
-                    this.latestDetectedOtherObjectMoveTimestamp = Date.now();
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
+    /**
+     * 백그라운드 루프 콜백입니다.
+     */
     private async callbackForBackground(): Promise<void> {
         try {
-            await this.handleForBackground.call(this);
+            await this.handleForBackground();
         } catch (error) {
             if (error instanceof NotSupportedBackgroundHandleException || error instanceof TerminateException) {
                 return;
             }
 
-            await this.bttStorage.scriptVariable('last-background-error', error as string);
+            await this.scriptContext.bttStorage.scriptVariable('last-background-error', error as string);
         }
     }
 
-    protected abstract handle(): Promise<void>;
-
-    protected async handleForBackground(): Promise<void> {
-        throw new NotSupportedBackgroundHandleException();
-    }
-
-    public get isMinimumMode() {
-        if (this.activeWindowRect) {
-            return this.activeWindowRect.width <= 800;
-        }
-
-        return false;
-    }
-
-    protected get activeWindowRect() {
-        return this._activeWindowRect!;
-    }
-
-    public async isActiveApp() {
-        const appName = await this.bttStorage.stringVariable('active_app_name');
-
-        return appName === 'MapleStory Worlds';
-    }
-
-    public async isRunning() {
-        const currentAutoScriptName = await this.bttStorage.stringVariable('current-auto-script-name');
-        if (currentAutoScriptName !== this.scriptName) {
-            return false;
-        }
-
-        const startedTimestamp = Number(await this.bttStorage.scriptVariable('started-timestamp'));
-
-        return startedTimestamp === this.scriptStartedTimestamp;
-    }
-
-    public async terminateIfNotRunning() {
-        if (!(await this.isRunning())) {
-            throw new TerminateException('Main loop terminated');
-        }
-    }
-
-    isHealthBelowByValue(value: number): boolean {
-        return this.character.getHealth() <= value;
-    }
-
-    isEmptyHealth(): boolean {
-        return this.isHealthBelowByValue(0);
-    }
-
-    isManaBelow(percent: number) {
-        const mana = this.character.getMana();
-        const maxMana = this.character.getMaxMana();
-
-        const currentPercent = (mana / maxMana) * 100;
-
-        return currentPercent < percent;
-    }
-
-    isEmptyMana() {
-        return this.character.getMana() < 30;
-    }
-
-    async isEmptyManaFromLog() {
-        const message = await this.getLastGameLog();
-
-        return message.includes('마력이 부족합니다.');
-    }
-
-    async isTargetSelecting() {
-        return this.bttService.imageSearch({
-            imageWithBase64: SearchImageBase64Type.TargetSelectingFromChatBox,
-            threshold: 0.9,
-            searchRegion: ImageSearchRegion.BottomLeft,
-        });
-    }
-
-    public async runTabTab() {
-        await this.bttService.wrapKeyboardInputBlock(async () => {
-            await this.bttService.sendKey(BttKeyCode.Tab, Latency.Tab);
-            return this.bttService.sendKey(BttKeyCode.Tab);
-        });
-    }
-
-    async selfHealing(isTargetChangeToSelf = true) {
-        await this.castSpellOnTarget(BttKeyCode.Number2, {
-            isNextTarget: isTargetChangeToSelf,
-            nextTargetKeyCode: BttKeyCode.Home,
-        });
-    }
-
-    async searchMonster(isNextTarget: boolean) {
-        await this.castSpellOnTarget(BttKeyCode.Number6, {
-            isNextTarget: isNextTarget,
-            nextTargetKeyCode: BttKeyCode.ArrowUp,
-        });
-
-        await uSleep(120); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
-
-        const lastGameLog = await this.getLastGameLog();
-
-        return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.includes(keyword));
-    }
-
-    async runDefensive(isSelf: boolean) {
-        await this.castSpellOnTarget(BttKeyCode.Number8, {
-            isNextTarget: isSelf,
-            nextTargetKeyCode: BttKeyCode.Home,
-        });
-        await uSleep(80);
-        await this.castSpellOnTarget(BttKeyCode.Number9, {
-            isNextTarget: isSelf,
-            nextTargetKeyCode: BttKeyCode.Home,
-        });
-
-        await this.defensiveTimer.set();
-    }
-
-    async runDefensiveIfTabTab() {
-        await this.bttService.sendKeys({ keyCodes: [BttKeyCode.Number8, BttKeyCode.Number9] });
-
-        await this.defensiveTimer.set();
-    }
-
-    async runCurse(isNextTarget?: boolean) {
-        await this.castSpellOnTarget(BttKeyCode.Number4, {
+    /**
+     * 몬스터를 검색합니다.
+     */
+    async searchMonster(isNextTarget: boolean): Promise<boolean> {
+        await this.gameContext.spell.cast(BttKeyCode.Number6, {
             isNextTarget,
             nextTargetKeyCode: BttKeyCode.ArrowUp,
         });
-    }
 
-    async useManaRecoveryItem() {
-        await this.bttService.sendKeys({ keyCodes: [BttKeyCode.u, BttKeyCode.a] });
-    }
+        await sleep(120); // 스크린샷 캡처 하기 전 게임 화면 갱신을 위해 잠깐 대기
 
-    async getLastGameLog() {
-        await screenCapture({
-            rect: this.activeWindowRect,
-        });
-        return await ocrByClipboard(GameRect.GameLastLog);
-    }
+        const lastGameLog = await this.gameContext.system.getLastGameLog();
 
-    extractItemShortCutAndName(itemRowText: string) {
-        return itemRowText.match(/([A-z0951])[\s]?[:;][\s]?([\w\W]+)/) ?? [];
-    }
-
-    async isManaRecoveryItemShortCutToA(itemRows: string[]) {
-        if (itemRows.length === 0) {
-            return false;
-        }
-
-        const [, shortCut, itemName] = this.extractItemShortCutAndName(itemRows[0]);
-
-        return shortCut === 'a' && ManaRecoveryItems.filter(name => itemName.includes(name)).length > 0;
-    }
-
-    async changeItemAToB(shortCutA: keyof typeof BttKeyCode, shortCutB: keyof typeof BttKeyCode) {
-        // 같은 자리로 변경하는 경우 무시
-        if (shortCutA === shortCutB) {
-            return;
-        }
-
-        // 오 인식으로 숫자 0이 전달되면 알파벳 o로 변경
-        if (shortCutA === 'Number0') {
-            shortCutA = 'o';
-        }
-
-        await this.bttService.sendKey(BttKeyCode.c, 500); // C
-        await this.bttService.sendKeys({
-            keyCodes: [BttKeyCode[shortCutA], BttKeyCode[','], BttKeyCode[shortCutB], BttKeyCode.Enter],
-        });
-    }
-
-    public async castSpellOnTarget(
-        keyCode: BttKeyCode,
-        options?: {
-            isNextTarget?: boolean;
-            nextTargetKeyCode?: BttKeyCode;
-        },
-    ) {
-        await this.terminateIfNotRunning();
-
-        if (options?.isNextTarget) {
-            return this.bttService.sendKeys({
-                keyCodes: [keyCode, options.nextTargetKeyCode ?? BttKeyCode.ArrowUp, BttKeyCode.Enter],
-            });
-        }
-
-        return this.bttService.sendKeys({ keyCodes: [keyCode, BttKeyCode.Enter] });
-    }
-
-    public extractBuffNameAndSeconds(str: string): [string, number] | [] {
-        const matches = str.match(/([가-힣]+).?([0-9]+)초/);
-        if (!matches) {
-            return [];
-        }
-
-        return [matches[1], Number(matches[2])];
-    }
-
-    protected isDetectCharacterHit() {
-        return this.detectedDecrementHpBarValue > 1;
-    }
-
-    protected unSetDetectCharacterHit() {
-        this.detectedDecrementHpBarValue = 0;
+        return !['마법 보호!!!', '걸리지 않습니다'].some(keyword => lastGameLog.includes(keyword));
     }
 }

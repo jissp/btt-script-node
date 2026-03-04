@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { BttClient } from '../btt-client';
+import { BttClient } from '../btt-client/btt.client';
 
 @injectable()
 export class BttStorage {
@@ -41,6 +41,6 @@ export class BttStorage {
     }
 
     public async isScriptVariable(name: string) {
-        return await this.scriptNumberVariable(name) === 1;
+        return (await this.scriptNumberVariable(name)) === 1;
     }
 }

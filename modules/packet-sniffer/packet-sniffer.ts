@@ -1,8 +1,8 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { inject, injectable } from 'tsyringe';
 import { EventEmitter } from 'events';
-import { debugLog, uSleep } from '../utils';
-import { excludePatterns, TcpHeader } from './packet-sniffer.interface';
+import { debugLog, sleep } from '../utils';
+import { excludePatterns, PacketType, TcpHeader } from './packet-sniffer.interface';
 import { PacketParser } from './packet-parser';
 import { PacketSnifferEvent } from './packet-sniffer.event';
 import { castEncoding } from './domains';
@@ -93,7 +93,7 @@ export class PacketSniffer {
                 const capturedData = this.variableQueue.shift();
                 const capturedDataLines = capturedData?.split('\n');
                 if (!capturedDataLines?.length) {
-                    await uSleep(20);
+                    await sleep(20);
                     continue;
                 }
 
@@ -149,7 +149,7 @@ export class PacketSniffer {
                 const capturedData = this.variableQueueForSend.shift();
                 const capturedDataLines = capturedData?.split('\n');
                 if (!capturedDataLines?.length) {
-                    await uSleep(20);
+                    await sleep(20);
                     continue;
                 }
 
@@ -232,12 +232,40 @@ export class PacketSniffer {
                 continue;
             }
 
-            debugLog('fragment', fragment);
-
+            // 패킷 타입별 이벤트 발행
             const parsedPacket = this.parser.parse(fragment);
             if (parsedPacket) {
-                this.eventEmitter.emit(PacketSnifferEvent.ReceiveParsedPacket, parsedPacket);
+                this.emitPacketTypeEvent(parsedPacket);
             }
+        }
+    }
+
+    /**
+     * 패킷 타입별로 다른 이벤트를 발행합니다.
+     */
+    private emitPacketTypeEvent(parsedPacket: any): void {
+        const { type } = parsedPacket;
+
+        switch (type) {
+            case PacketType.UpdatedCharacterStatus:
+                this.eventEmitter.emit(PacketSnifferEvent.CharacterStatusFull, parsedPacket);
+                break;
+
+            case PacketType.UpdatedPartialCharacterStatus:
+                this.eventEmitter.emit(PacketSnifferEvent.CharacterStatusPartial, parsedPacket);
+                break;
+
+            case PacketType.ChangedObjectHpBarValue:
+                this.eventEmitter.emit(PacketSnifferEvent.HpBarChanged, parsedPacket);
+                break;
+
+            case PacketType.ClientSelfLook:
+                this.eventEmitter.emit(PacketSnifferEvent.SelfLook, parsedPacket);
+                break;
+
+            case PacketType.ChangedObjectMove:
+                this.eventEmitter.emit(PacketSnifferEvent.ObjectMoved, parsedPacket);
+                break;
         }
     }
 

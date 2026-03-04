@@ -18,7 +18,7 @@ export class Timer {
     public async init(callback?: () => Promise<void>) {
         await this.sync();
 
-        if(callback) {
+        if (callback) {
             await callback();
         }
     }
@@ -34,9 +34,12 @@ export class Timer {
         this.timestamp = Number(await this.bttStorage.scriptVariable(this.name)) || 0;
     }
 
-    public async set() {
+    public async set({ isSync }: { isSync?: boolean } = { isSync: true }) {
         this.timestamp = Date.now();
-        await this.bttStorage.scriptVariable(this.name, this.timestamp.toString());
+
+        if (isSync) {
+            await this.bttStorage.scriptVariable(this.name, this.timestamp.toString());
+        }
     }
 
     public isExpired() {
@@ -53,7 +56,7 @@ export class Timer {
                 this.isLock = true;
 
                 await callback();
-            } catch(error) {
+            } catch (error) {
                 throw error;
             } finally {
                 await this.set();

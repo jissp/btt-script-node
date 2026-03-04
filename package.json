@@ -8,6 +8,7 @@
     "axios": "^1.7.9",
     "build-url-ts": "^6.1.8",
     "esbuild": "^0.25.0",
+    "eventemitter2": "^6.4.9",
     "ioredis": "^5.5.0",
     "prettier": "^3.5.1",
     "redis": "^4.7.0",

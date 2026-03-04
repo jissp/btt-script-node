@@ -13,6 +13,6 @@ const eventEmitter = container.resolve(EventEmitter);
 
 packetSniffer.run();
 
-eventEmitter.on(PacketSnifferEvent.ReceiveParsedPacket, (packet: ParsedPacket) => {
+eventEmitter.on(PacketSnifferEvent.CharacterStatusFull, (packet: ParsedPacket) => {
     console.log(packet);
 });
